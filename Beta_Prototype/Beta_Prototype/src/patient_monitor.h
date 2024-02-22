@@ -101,4 +101,7 @@ void cycleBPSystem();
 void runPump30s();
 void pumpOn();
 void stopPump();
-void disp
+void displayBP(float pressure);
+
+
+#endif

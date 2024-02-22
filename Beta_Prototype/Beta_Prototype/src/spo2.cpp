@@ -237,4 +237,17 @@ void calculateSpO2(int index)
 {
   int spo2_temp = 0, spo2_total = 0;
 
-  //update value in
+  //update value in array
+  int spo2_array_val = index % 20;
+  spo2_data[spo2_array_val] = body.oxygen;
+
+  //calulate average
+  for(int i = 0; i < 20; i++)
+  {
+    spo2_temp = spo2_data[i];
+    spo2_total += spo2_temp;
+  }
+  Serial.println(avg_spo2);
+  avg_spo2 = spo2_total / 20;
+
+}
