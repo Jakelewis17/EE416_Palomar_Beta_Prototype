@@ -43,6 +43,8 @@ float threshold = 130;  //Threshold at which BPM calculation occurs
 boolean belowThreshold = true;
 int end_measurment = 0;
 int starttime_ecg = 0, endtime_ecg = 0;
+int ecg_data[25] = { 0 };
+int ecg_avg = 0, ecg_array_val = 0, ecg_temp = 0, ecg_total = 0;
 
 /* Extern Blynk timer */
 extern BlynkTimer timer;
@@ -95,6 +97,7 @@ void ecg_measurement()
   digit_box.setTextColor(TFT_BLACK, TFT_BLUE);
   digit_box.fillSprite(TFT_BLUE);
 
+  int ecg_index = 0;
   starttime_ecg = millis();
   endtime_ecg = starttime_ecg;
 
@@ -104,13 +107,65 @@ void ecg_measurement()
 
     Blynk.virtualWrite(V56, "Measurement in Progress");  //ecg
 
-    //get analog input and perfom binning
+    //get analog input 
     ecg_reading = analogRead(PinECG);
     Serial.println(ecg_reading);
-    
+
+    //rudimentary DSP
+    if(ecg_reading < 300)
+    {
+      ecg_reading = ecg_avg;
+    }
+    else if((ecg_reading >= 300) && (ecg_reading < 500))
+    {
+      ecg_reading = 400;
+    }
+    else if((ecg_reading >= 500) && (ecg_reading < 700))
+    {
+      ecg_reading = 600;
+    }
+    else if((ecg_reading >= 700) && (ecg_reading < 900))
+    {
+      ecg_reading = 800;
+    }
+    else if((ecg_reading >= 900) && (ecg_reading < 1100))
+    {
+      ecg_reading = 1000;
+    }
+    else if((ecg_reading >= 1100) && (ecg_reading < 1300))
+    {
+      ecg_reading = 1200;
+    }
+    else if((ecg_reading >= 1300) && (ecg_reading < 1500))
+    {
+      ecg_reading = 1400;
+    }
+    else if((ecg_reading >= 1500) && (ecg_reading < 1700))
+    {
+      ecg_reading = 1600;
+    }
+    else if((ecg_reading >= 1700) && (ecg_reading < 1900))
+    {
+      ecg_reading = 1800;
+    }
+    else
+    {
+      ecg_reading = 2000;
+    }
+
+    ecg_array_val = ecg_index % 25;
+    ecg_data[ecg_array_val] = ecg_reading;
+
+    //calulate average
+    for(int i = 0; i < 25; i++)
+    {
+     ecg_temp = ecg_data[i];
+     ecg_total += ecg_temp;
+    }
+    ecg_avg = ecg_total / 25;
     //ecg_reading = ecg_reading / 40;
     //17
-
+    ecg_index++;
     timer.run(); //run Blynk timer
 
     //ecg_reading = ecg_reading % 220;
@@ -273,57 +328,9 @@ void ecg_measurement()
     //Serial.println("HR ");
     //Serial.println(BPM);
 
-    Serial.println(ecg_control_value);
+    //Serial.println(ecg_control_value);
 
     if(initial_measurments < 50)
     {
       initial_measurments++;
     }
-    /*
-    static unsigned long lastTimer0 = 0;
-	  static bool timer0Stopped         = false;
-
-	  if (millis() - lastTimer0 > TIMER0_DURATION_MS)
-	  {
-	  	lastTimer0 = millis();
-
-	  	if (timer0Stopped)
-		  {
-		  	Serial.print(F("Start ITimer0, millis() = "));
-		  	Serial.println(millis());
-		  	ITimer0.restartTimer();
-		  }
-		  else
-	  	{
-		  	Serial.print(F("Stop ITimer0, millis() = "));
-		  	Serial.println(millis());
-		  	ITimer0.stopTimer();
-	  }
-
-		timer0Stopped = !timer0Stopped;
-    
-    
-	}
-  */
-    endtime_ecg = millis();
-    
-  }
-
-  Blynk.virtualWrite(V50, 0); //reset ECG measurement button
-  Blynk.virtualWrite(V56, "Measurement Complete, View Server for Details or Measure Again");  //ecg
-}
-
-void calculateBPM () 
-{  
-  int beat_new = millis();    // get the current millisecond
-  int diff = beat_new - beat_old;    // find the time between the last two beats
-  float currentBPM = 60000 / diff;    // convert to beats per minute
-  beats[beatIndex] = currentBPM;  // store to array to convert the average
-  float total = 0.0;
-  for (int i = 0; i < 15; i++){
-    total += beats[i];
-  }
-  BPM = int(total / 15);
-  beat_old = beat_new;
-  beatIndex = (beatIndex + 1) % 15;  // cycle through the array instead of using FIFO queue
-  }

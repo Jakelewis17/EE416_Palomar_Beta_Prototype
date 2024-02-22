@@ -19,6 +19,7 @@
 #include "patient_monitor.h"
 
 extern int what_press;
+extern int spo2_control_value;
 
 /* Define rotary encoder button */
 extern BfButton rotary_sw;
@@ -32,24 +33,30 @@ extern TFT_eSprite digit_box;
 extern TFT_eSprite hr_display;
 extern TFT_eSprite spo2_display;
 
-/* SPO2 Variables */
-extern uint32_t tsLastReport;
-
-int32_t bufferLength; //data length
-int32_t spo2; //SPO2 value
-int8_t validSPO2; //indicator to show if the SPO2 calculation is valid
-int32_t heartRate; //heart rate value
-int8_t validHeartRate; //indicator to show if the heart rate calculation is valid
-extern MAX30105 particleSensor;
-uint32_t irBuffer[100]; //infrared LED sensor data
-uint32_t redBuffer[100];  //red LED sensor data
-int heartrate_data[50];
-int spo2_data[50];
-
 extern BlynkWifi Blynk;
 extern BlynkTimer timer;
 
 int starttime_spo2 = 0, endtime_spo2 = 0;
+int spo2_data[20] = { 0 };
+int avg_spo2 = 0;
+
+// Takes address, reset pin, and MFIO pin.
+SparkFun_Bio_Sensor_Hub bioHub(resPin, mfioPin); 
+bioData body;  //This is a type (int, byte, long, etc.)
+
+void SpO2_timer() 
+{
+  //Write to virtual pin 54 (SpO2 data)
+  if(avg_spo2 < 85)
+  {
+    Blynk.virtualWrite(V54, "...");  
+  }
+  else
+  {
+    Blynk.virtualWrite(V54, avg_spo2);  
+  }
+  
+}
 
 void read_spo2()
 {
@@ -66,126 +73,48 @@ void read_spo2()
   tft.drawString("Click once to start", 0, 80, 4);
   tft.drawString("Click twice to return", 0, 120, 4);
 
+  timer.setInterval(1000L, SpO2_timer); 
   spo2_measurment();
 
-  /*
-  for(;;) //infinite polling loop for switch input
-  {
-    rotary_sw.read();
-    if(what_press == 1)
-    {
-      //single press - jump to SpO2 measurement function
-      spo2_measurment();
-      what_press = 0;
-      tft.fillScreen(TFT_RED);
-      break;
-    }
-    else if(what_press == 2)
-    {
-      //double press - go backto seleciton screen
-      tft.fillScreen(TFT_RED);
-      break;
-    }
-    
-    what_press = 0;
-  }
-  */
 }
 
-// Callback (registered below) fired when a pulse is detected
-void onBeatDetected()
-{
-    Serial.println("Beat!");
-}
+
 
 void spo2_measurment()
 {
-  byte error, address;
-  int nDevices;
-  Serial.println("Scanning...");
-  nDevices = 0;
-  for(address = 1; address < 127; address++ ) {
-    Wire.beginTransmission(address);
-    error = Wire.endTransmission();
-    if (error == 0) {
-      Serial.print("I2C device found at address 0x");
-      if (address<16) {
-        Serial.print("0");
-      }
-      Serial.println(address,HEX);
-      nDevices++;
-    }
-    else if (error==4) {
-      Serial.print("Unknow error at address 0x");
-      if (address<16) {
-        Serial.print("0");
-      }
-      Serial.println(address,HEX);
-    }    
-  }
-  if (nDevices == 0) {
-    Serial.println("No I2C devices found\n");
+
+  // Taken from SparkFun
+  Wire.begin();
+  int result = bioHub.begin();
+  if (result == 0) // Zero errors!
+    Serial.println("Sensor started!");
+  else
+    Serial.println("Could not communicate with the sensor!");
+ 
+  Serial.println("Configuring Sensor...."); 
+  int error = bioHub.configBpm(MODE_ONE); // Configuring just the BPM settings. 
+  if(error == 0){ // Zero errors!
+    Serial.println("Sensor configured.");
   }
   else {
-    Serial.println("done\n");
+    Serial.println("Error configuring sensor.");
+    Serial.print("Error: "); 
+    Serial.println(error); 
   }
-  // // Asynchronously dump heart rate and oxidation levels to the serial
-  // //address: 0x55
-  // Wire.begin(SDA_PIN, SCL_PIN);
-  // Serial.println("Wire begin");
-  // Wire.beginTransmission(0x55);
-  // Serial.println("Wire begin 2");
 
-  // digitalWrite(PIN_GPIO, HIGH);
-  // digitalWrite(PIN_SPO2_RST, LOW);
-  // delay(10);
-  // digitalWrite(PIN_SPO2_RST, HIGH);
-  // delay(1000);
-  // pinMode(PIN_GPIO, INPUT_PULLUP); // To be used as an interrupt later
+  // Data lags a bit behind the sensor, if your finger is on the sensor when
+  // it's being configured this delay will give some time for the data to catch
+  // up. 
+  Serial.println("Loading up the buffer with data....");
+ 
+  //display "calibrating" screen
+  tft.fillScreen(TFT_BLACK);
+  tft.setTextColor(TFT_WHITE, TFT_BLACK);
+  tft.setFreeFont(&Dialog_plain_35); //custom font
+  tft.drawString("Calibrating...: ", 15, 115);
+  
+  delay(500);
 
-  // // Register a callback for the beat detection
-  // pox.setOnBeatDetectedCallback(onBeatDetected);
-
-  // // if (!pox.begin()) 
-  // //   {
-  // //       Serial.println("FAILED");
-  // //       for(;;)
-  // //       {
-  // //         tft.fillScreen(TFT_BLACK);
-  // //         tft.drawString("Failed", 0, 80, 4);
-  // //       }
-  // //       return;
-  // //   } 
-  // //   else 
-  // //   {
-  // //       Serial.println("SUCCESS");
-  // //   }
-
-  // for(;;)
-  // {
-    
-  //   // For both, a value of 0 means "invalid"
-  //   if (millis() - tsLastReport > REPORTING_PERIOD_MS) {
-  //       Serial.print("Heart rate:");
-  //       Serial.print(pox.getHeartRate());
-  //       Serial.print("bpm / SpO2:");
-  //       Serial.print(pox.getSpO2());
-  //       Serial.println("%");
-
-  //       tsLastReport = millis();
-  //   }
-
-  //   pox.update();
-
-  //   rotary_sw.read();
-  //   if(what_press == 3)
-  //   {
-  //     //long press terminates the loop
-  //     what_press = 0;
-  //     tft.fillScreen(TFT_RED);
-  //     break;
-  //   }
-  // }
 
   tft.fillScreen(TFT_BLUE);
   title.fillSprite(TFT_BLUE);
@@ -196,167 +125,85 @@ void spo2_measurment()
   digit_box.setTextColor(TFT_BLACK, TFT_BLUE);
   digit_box.fillSprite(TFT_BLUE);
 
-  // title2.fillSprite(TFT_BLUE);
-  // title2.setTextColor(TFT_WHITE, TFT_BLUE);
-  // title2.drawString("SPO2: ", 0, 0);
-  // title2.pushSprite(30, 150);
+  int finger_detect = 0; // temp variable
 
-  /* Large portion of code taken from Sparkfun library */
-
-  // Initialize sensor
-  if (!particleSensor.begin(Wire, I2C_SPEED_FAST)) //Use default I2C port, 400kHz speed
-  {
-    Serial.println(F("MAX30105 not found"));
-    while (1);
-  }
-
-  Serial.read();
-
-  byte ledBrightness = 60; //Options: 0=Off to 255=50mA
-  byte sampleAverage = 4; //Options: 1, 2, 4, 8, 16, 32
-  byte ledMode = 2; //Options: 1 = Red only, 2 = Red + IR, 3 = Red + IR + Green
-  byte sampleRate = 100; //Options: 50, 100, 200, 400, 800, 1000, 1600, 3200
-  int pulseWidth = 411; //Options: 69, 118, 215, 411
-  int adcRange = 4096; //Options: 2048, 4096, 8192, 16384
-  int index = 0;
-  int avg_spo2 = 0;
-  int avg_hr = 0;
-  int finger_detect = 0;
-
-  particleSensor.setup(ledBrightness, sampleAverage, ledMode, sampleRate, pulseWidth, adcRange); //Configure sensor with these settings
-
-  tft.fillScreen(TFT_BLACK);
-  tft.setTextColor(TFT_WHITE, TFT_BLACK);
-  tft.setFreeFont(&Dialog_plain_35); //custom font
-  tft.drawString("Calibrating...: ", 15, 115);
-
-  starttime_spo2 = millis();
-  endtime_spo2 = starttime_spo2;
-
-  for(;;)
-  {
-    bufferLength = 100; //buffer length of 100 stores 4 seconds of samples running at 25sps
-
-  //read the first 100 samples, and determine the signal range
-  for (byte i = 0 ; i < bufferLength ; i++)
-  {
-    while (particleSensor.available() == false) //do we have new data?
-      particleSensor.check(); //Check the sensor for new data
-
-    redBuffer[i] = particleSensor.getRed();
-    irBuffer[i] = particleSensor.getIR();
-
-    if(irBuffer[i] < 50000)
-      {
-        //no finger detected
-        finger_detect = 0;
-        //display_spo2(finger_detect);
-        finger_detect = 1;
-      }
-
-    particleSensor.nextSample(); //We're finished with this sample so move to next sample
-
-    Serial.print(F("red="));
-    Serial.print(redBuffer[i], DEC);
-    Serial.print(F(", ir="));
-    Serial.println(irBuffer[i], DEC);
-
-
-  }
-
-  //calculate heart rate and SpO2 after first 100 samples (first 4 seconds of samples)
-  maxim_heart_rate_and_oxygen_saturation(irBuffer, bufferLength, redBuffer, &spo2, &validSPO2, &heartRate, &validHeartRate);
-
-  
-  //after loading
+  //after loading display
   tft.fillScreen(TFT_BLUE);
-  spo2_display.drawString(String(spo2), 0, 0, 7);
+  spo2_display.drawString(String(body.oxygen), 0, 0, 7);
   spo2_display.pushSprite(80, 150);
   title.setTextColor(TFT_WHITE, TFT_BLUE);
   title.pushSprite(70, 60);
   digit_box.pushSprite(143, 150);
 
-  //Continuously taking samples from MAX30102.  Heart rate and SpO2 are calculated every 1 second
-  while((endtime_spo2 - starttime_spo2) <= 5000)
-  {
-    //dumping the first 25 sets of samples in the memory and shift the last 75 sets of samples to the top
-    for (byte i = 25; i < 100; i++)
-    {
-      redBuffer[i - 25] = redBuffer[i];
-      irBuffer[i - 25] = irBuffer[i];
-    }
-
-    //take 25 sets of samples before calculating the heart rate.
-    for (byte i = 75; i < 100; i++)
-    {
+  int spo2_index = 0;
+  starttime_spo2 = millis();
+  endtime_spo2 = starttime_spo2;
     
-      redBuffer[i] = particleSensor.getRed();
-      irBuffer[i] = particleSensor.getIR();
+    //Continuously taking samples from MAX30101.  Heart rate and SpO2 are calculated every 1 second
+    while((endtime_spo2 - starttime_spo2) <= 20000)
+    {
+      Blynk.virtualWrite(V57, "Measurement in Progress");  
+      timer.run(); //run Blynk timer
 
-      if(irBuffer[i] < 50000)
-      {
-        //no finger detected
-        finger_detect = 0;
-        display_spo2(finger_detect);
-        finger_detect = 1;
+      //some code taken from SparkFun
+      //Information from the readBpm function will be saved to our "body"
+      //variable.
+      body = bioHub.readBpm();
+      
+      finger_detect = body.status; // 0 = no finger, 3 = finger detected;
+      
+      Serial.print("Heartrate: ");
+      Serial.println(body.heartRate); 
+      Serial.print("Confidence: ");
+      Serial.println(body.confidence); 
+      Serial.print("Oxygen: ");
+      Serial.println(body.oxygen);
+      Serial.print("Status: ");
+      Serial.println(body.status);
+
+      // Slow it down or your heart rate will go up trying to keep up
+      // with the flow of numbers
+      delay(250);
+
+      //display_spo2(finger_detect);
+      if (finger_detect == 3) 
+      {  
+        calculateSpO2(spo2_index);
+        display_spo2(3);      
+        spo2_index++;  //update index only if finger_detected
       }
-      particleSensor.nextSample(); //We're finished with this sample so move to next sample
-
-      //send samples and calculation result to terminal program through UART
-      Serial.print(F("red="));
-      Serial.print(redBuffer[i], DEC);
-      Serial.print(F(", ir="));
-      Serial.print(irBuffer[i], DEC);
-
-      Serial.print(F(", HR="));
-      Serial.print(heartRate, DEC);
-
-      Serial.print(F(", HRvalid="));
-      Serial.print(validHeartRate, DEC);
-
-      Serial.print(F(", SPO2="));
-      Serial.print(spo2, DEC);
-
-      Serial.print(F(", SPO2Valid="));
-      Serial.println(validSPO2, DEC);
+      else if (finger_detect == 0) {
+        display_spo2(0);
+        Blynk.virtualWrite(V57, "No Finger Detected"); 
+      }
 
       //check for long press to go back to menu
       rotary_sw.read();
       if(what_press == 3)
-      { 
-        break;
-      }
-
-    }
-
-    //After gathering 25 new samples recalculate HR and SP02
-    maxim_heart_rate_and_oxygen_saturation(irBuffer, bufferLength, redBuffer, &spo2, &validSPO2, &heartRate, &validHeartRate);
-
-    Serial.println(spo2);
-    Serial.println(heartRate);
-
-    //display
-    display_spo2(1);
-
-    //check for long press to go back to menu
-    if(what_press == 3)
     {
       //long press terminates the loop
+      what_press = 0;
+      tft.fillScreen(TFT_WHITE);
       break;
     }
+
+    //terminate measurement before done
+    Blynk.run();
+    if(spo2_control_value == 0) //terminate measurement
+    {
+      //long press terminates the loop
+      what_press = 0;
+      tft.fillScreen(TFT_WHITE);
+      Blynk.virtualWrite(V51, 0); //reset ECG measurement button
+      Blynk.virtualWrite(V57, "Measurement Complete, View Server for Details or Measure Again");
+      break;
+    }
+   
     endtime_spo2 = millis();
   }
-  what_press = 3;
-  //check for long press to go back to menu
-  if(what_press == 3)
-  {
-    //long press terminates the loop
-    what_press = 0;
-    tft.fillScreen(TFT_WHITE);
-    break;
-  }
 
-  }
+  Blynk.virtualWrite(V51, 0); //reset spo2 measurement button
+  Blynk.virtualWrite(V57, "Measurement Complete, View Server for Details or Measure Again");  
 
 }
 
@@ -364,28 +211,30 @@ void spo2_measurment()
 void display_spo2(int finger_detect)
 {
 
-  if(finger_detect == 0 || spo2 == -999)
+  if(finger_detect == 0)
   {
     //no finger detected - display 0
     spo2_display.drawString("000", 0, 0, 7);
     spo2_display.pushSprite(80, 150);
-    //digit_box.pushSprite(143, 150);
   }
   else
-  {
-    if(spo2 != -999) //if -999, invalid so don't display
-    {
-      //display average SPO2
-      spo2_display.drawString(String(spo2), 0, 0, 7);
-      spo2_display.pushSprite(80, 150);
+  {  
+    //display average SPO2
+    spo2_display.drawString(String(body.oxygen), 0, 0, 7);
+    spo2_display.pushSprite(80, 150);
 
-      if(spo2 < 100)
-      {
-        //fix extra digit issue
-        digit_box.pushSprite(143, 150);
-      }
-    }
-    
+    if(body.oxygen < 100)
+    {
+      //fix extra digit issue
+      digit_box.pushSprite(143, 150);
+    }      
   }
 
+
 }
+
+void calculateSpO2(int index)
+{
+  int spo2_temp = 0, spo2_total = 0;
+
+  //update value in

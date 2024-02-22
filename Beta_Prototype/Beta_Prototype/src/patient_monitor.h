@@ -49,6 +49,7 @@
 #include <WiFi.h>
 #include <WiFiClient.h>
 #include <BlynkSimpleEsp32.h>
+#include <SparkFun_Bio_Sensor_Hub_Library.h>
 //#include "ESP32TimerInterrupt.h"
 
 #define REPORTING_PERIOD_MS     1000
@@ -69,8 +70,8 @@ const int PinCLK = 27;
 const int PinDT = 14;
 const int PinSW = 13;
 const int PinECG = 34;
-const int SDA_PIN = 21;
-const int SCL_PIN = 22;
+//const int SDA_PIN = 21;
+//const int SCL_PIN = 22;
 const int PIN_GPIO = 19;
 const int PIN_SPO2_RST = 18;
 const int PINBP = 2;
@@ -78,6 +79,8 @@ const int A1 = 16;
 const int A2 = 17;
 const int valveSwitch = 18;
 const int pVIn = 2;
+const int resPin = 4;
+const int mfioPin = 5;
 
 /* Function definitions */
 void read_ecg();
@@ -89,6 +92,7 @@ void bp_measurement();
 void display_spo2(int finger_detect);
 void drawLine(int xPos, int analogVal);
 void calculateBPM(); 
+void calculateSpO2(int index);
 
 //Blood Pressure Functions
 void openValve();
@@ -97,7 +101,4 @@ void cycleBPSystem();
 void runPump30s();
 void pumpOn();
 void stopPump();
-void displayBP(float pressure);
-
-
-#endif
+void disp
