@@ -386,3 +386,6 @@ void calculateBPM ()
     total += beats[i];
   }
   BPM = int(total / 15);
+  beat_old = beat_new;
+  beatIndex = (beatIndex + 1) % 15;  // cycle through the array instead of using FIFO queue
+  }
