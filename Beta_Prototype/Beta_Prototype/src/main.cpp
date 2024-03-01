@@ -25,6 +25,8 @@ int ecg_control_value = -1;
 int spo2_control_value = -1;
 int bp_control_value = -1;
 
+patientdata Patientdata;
+
 /* Define rotary encoder button */
 BfButton rotary_sw(BfButton::STANDALONE_DIGITAL, PinSW, true, LOW);
 
@@ -124,6 +126,11 @@ BLYNK_WRITE(V61) //User Enter
   Blynk.virtualWrite(V59, CurrentUser);  //send CurrentUser to app
 }
 
+BLYNK_WRITE(V62) //User Enter
+{   
+  sendData();
+}
+
 
 /* Setup Function*/
 void setup() {
@@ -205,6 +212,7 @@ void setup() {
   Blynk.virtualWrite(V58, "Idle");  //bp
 
   delay(500);
+
 
 }
 
@@ -392,5 +400,44 @@ else
     what_param = -1;
   }
   
+}
+
+void sendData()
+{
+  //get time
+  time_t t = time(NULL);
+  struct tm tm = *localtime(&t);
+  sprintf(Patientdata.date, "%d-%02d-%02d %02d:%02d:%02d\n", tm.tm_year + 1900, tm.tm_mon + 1, 
+  tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
+
+  //send data via I2C to other esp (print values for now)
+  Serial.print("Spo2: ");
+  Serial.println(Patientdata.Spo2);
+  Serial.print("Spo2 Valid? ");
+  Serial.println(Patientdata.SpO2_invalid);
+  Serial.print("BP: ");
+  Serial.println(Patientdata.BP);
+  Serial.print("BP Valid? ");
+  Serial.println(Patientdata.BP_invalid);
+  Serial.print("HR: ");
+  Serial.println(Patientdata.Heartrate);
+  Serial.print("Date: ");
+  Serial.println(Patientdata.date);
+  Serial.print("ECG: ");
+  
+
+  //reset all values back to 0
+  Patientdata.Spo2 = 0;
+  Patientdata.SpO2_invalid = 0;
+  Patientdata.BP_invalid = 0;
+  Patientdata.ECG_invalid = 0;
+  Patientdata.Heartrate = 0;
+  strcpy(Patientdata.BP, " ");
+  strcpy(Patientdata.date, " ");
+
+  for(int i = 0; i < 1000; i++)
+  {
+    Patientdata.ECG[i] = 0;
+  }
 }
 

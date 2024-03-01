@@ -22,6 +22,8 @@
 extern int what_press;
 extern int ecg_control_value;
 
+extern patientdata Patientdata;
+
 /* Define rotary encoder button */
 extern BfButton rotary_sw;
 
@@ -101,7 +103,7 @@ void ecg_measurement()
   starttime_ecg = millis();
   endtime_ecg = starttime_ecg;
 
-  while((endtime_ecg - starttime_ecg) <= 20000) //infinite loop getting measurement or run for 20 seconds
+  while((endtime_ecg - starttime_ecg) <= 30000) //infinite loop getting measurement or run for 20 seconds
   {
     //timer.run(); //run Blynk timer
 
@@ -109,9 +111,12 @@ void ecg_measurement()
 
     //get analog input 
     ecg_reading = analogRead(PinECG);
+    Patientdata.ECG[ecg_index] = ecg_reading;
+
     Serial.println(ecg_reading);
 
     //rudimentary DSP
+    /*
     if(ecg_reading < 300)
     {
       ecg_reading = ecg_avg;
@@ -152,6 +157,7 @@ void ecg_measurement()
     {
       ecg_reading = 2000;
     }
+    */
 
     ecg_array_val = ecg_index % 25;
     ecg_data[ecg_array_val] = ecg_reading;
@@ -250,7 +256,8 @@ void ecg_measurement()
       what_press = 0;
       tft.fillScreen(TFT_WHITE);
       Blynk.virtualWrite(V50, 0); //reset ECG measurement button
-      Blynk.virtualWrite(V56, "Measurement Complete, View Server for Details or Measure Again");
+      Blynk.virtualWrite(V56, "Previous Measurement Was Invalid");
+      Patientdata.ECG_invalid = 1; //set invalid flag
       break;
     }
 
@@ -379,6 +386,3 @@ void calculateBPM ()
     total += beats[i];
   }
   BPM = int(total / 15);
-  beat_old = beat_new;
-  beatIndex = (beatIndex + 1) % 15;  // cycle through the array instead of using FIFO queue
-  }

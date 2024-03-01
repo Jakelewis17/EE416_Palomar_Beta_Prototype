@@ -31,6 +31,7 @@
 #include <TFT_eSPI.h>
 #include <BfButton.h>
 #include <Wire.h>
+#include <time.h>
 #include "ecg_sig.h"
 #include "title_font.h"
 //#include "heartbeat/hb_frame0.h"
@@ -63,6 +64,19 @@
 #define TIMER0_INTERVAL_MS        1000
 #define TIMER0_DURATION_MS        5000
 
+struct patientdata{
+    int Spo2;
+    char BP[10];
+    int Heartrate;
+    char date[50];
+    int ECG[1000];
+    int SpO2_invalid;
+    int BP_invalid;
+    int ECG_invalid;
+};
+
+extern struct patientdata Patientdata;
+
 //extern BlynkWifi Blynk;
 
 /* Define IO Pins */
@@ -93,6 +107,7 @@ void display_spo2(int finger_detect);
 void drawLine(int xPos, int analogVal);
 void calculateBPM(); 
 void calculateSpO2(int index);
+void calculateHR(int index);
 
 //Blood Pressure Functions
 void openValve();
@@ -102,6 +117,8 @@ void runPump30s();
 void pumpOn();
 void stopPump();
 void displayBP(float pressure);
+
+void sendData();
 
 
 #endif

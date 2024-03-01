@@ -21,6 +21,8 @@
 extern int what_press;
 extern int spo2_control_value;
 
+extern patientdata Patientdata;
+
 /* Define rotary encoder button */
 extern BfButton rotary_sw;
 
@@ -38,7 +40,10 @@ extern BlynkTimer timer;
 
 int starttime_spo2 = 0, endtime_spo2 = 0;
 int spo2_data[20] = { 0 };
+int HR_data[20] = { 0 };
 int avg_spo2 = 0;
+int avg_HR = 0;
+char result[10];
 
 // Takes address, reset pin, and MFIO pin.
 SparkFun_Bio_Sensor_Hub bioHub(resPin, mfioPin); 
@@ -46,6 +51,9 @@ bioData body;  //This is a type (int, byte, long, etc.)
 
 void SpO2_timer() 
 {
+
+  sprintf(result, "%i", avg_spo2);
+
   //Write to virtual pin 54 (SpO2 data)
   if(avg_spo2 < 85)
   {
@@ -53,9 +61,8 @@ void SpO2_timer()
   }
   else
   {
-    Blynk.virtualWrite(V54, avg_spo2);  
+    Blynk.virtualWrite(V54, result);  
   }
-  
 }
 
 void read_spo2()
@@ -140,10 +147,10 @@ void spo2_measurment()
   endtime_spo2 = starttime_spo2;
     
     //Continuously taking samples from MAX30101.  Heart rate and SpO2 are calculated every 1 second
-    while((endtime_spo2 - starttime_spo2) <= 20000)
+    while((endtime_spo2 - starttime_spo2) <= 30000)
     {
       Blynk.virtualWrite(V57, "Measurement in Progress");  
-      timer.run(); //run Blynk timer
+      timer.run(); //run Blynk timers
 
       //some code taken from SparkFun
       //Information from the readBpm function will be saved to our "body"
@@ -169,6 +176,7 @@ void spo2_measurment()
       if (finger_detect == 3) 
       {  
         calculateSpO2(spo2_index);
+        calculateHR(spo2_index);
         display_spo2(3);      
         spo2_index++;  //update index only if finger_detected
       }
@@ -195,7 +203,9 @@ void spo2_measurment()
       what_press = 0;
       tft.fillScreen(TFT_WHITE);
       Blynk.virtualWrite(V51, 0); //reset ECG measurement button
-      Blynk.virtualWrite(V57, "Measurement Complete, View Server for Details or Measure Again");
+      Blynk.virtualWrite(V57, "Previous Measurement Was Invalid");
+      Patientdata.SpO2_invalid = 1; //set invalid flag
+      
       break;
     }
    
@@ -249,5 +259,23 @@ void calculateSpO2(int index)
   }
   Serial.println(avg_spo2);
   avg_spo2 = spo2_total / 20;
+  Patientdata.Spo2 = avg_spo2;
 
+}
+
+void calculateHR(int index)
+{
+  int HR_temp = 0, HR_total = 0;
+
+  int HR_array_val = index % 20;
+  HR_data[HR_array_val] = body.heartRate;
+
+  //calulate average
+  for(int i = 0; i < 20; i++)
+  {
+    HR_temp = HR_data[i];
+    HR_total += HR_temp;
+  }
+  avg_HR = HR_total / 20;
+  Patientdata.Heartrate = avg_HR;
 }

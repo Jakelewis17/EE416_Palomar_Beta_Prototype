@@ -20,6 +20,8 @@
 
 extern int what_press;
 
+extern patientdata Patientdata;
+
 /* Define rotary encoder button */
 extern BfButton rotary_sw;
 
