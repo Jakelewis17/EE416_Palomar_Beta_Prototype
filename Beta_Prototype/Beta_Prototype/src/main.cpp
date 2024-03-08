@@ -437,6 +437,7 @@ void sendData()
 
   for(int i = 0; i < 1000; i++)
   {
+    Serial.print(Patientdata.ECG[i]);
     Patientdata.ECG[i] = 0;
   }
 }

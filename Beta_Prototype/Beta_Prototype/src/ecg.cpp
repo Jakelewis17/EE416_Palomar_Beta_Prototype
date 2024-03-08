@@ -47,6 +47,8 @@ int end_measurment = 0;
 int starttime_ecg = 0, endtime_ecg = 0;
 int ecg_data[25] = { 0 };
 int ecg_avg = 0, ecg_array_val = 0, ecg_temp = 0, ecg_total = 0;
+int ecg_index = 0;
+int ecg_buffer[350] = { 0 };
 
 /* Extern Blynk timer */
 extern BlynkTimer timer;
@@ -56,6 +58,7 @@ void ECG_timer()
 {
   //Write to virtual pin 53 (ECG data)
   Blynk.virtualWrite(V53, ecg_reading);  
+  Blynk.virtualWrite(V53, ecg_buffer[ecg_index]);
 }
 
 
@@ -64,7 +67,7 @@ void read_ecg()
   what_press = 0;
   
   //set interval to update app every half second
-  timer.setInterval(500L, ECG_timer); 
+  timer.setInterval(90L, ECG_timer); 
   ecg_measurement();
 }
 
@@ -99,7 +102,7 @@ void ecg_measurement()
   digit_box.setTextColor(TFT_BLACK, TFT_BLUE);
   digit_box.fillSprite(TFT_BLUE);
 
-  int ecg_index = 0;
+  
   starttime_ecg = millis();
   endtime_ecg = starttime_ecg;
 
@@ -110,54 +113,13 @@ void ecg_measurement()
     Blynk.virtualWrite(V56, "Measurement in Progress");  //ecg
 
     //get analog input 
-    ecg_reading = analogRead(PinECG);
+    //ecg_reading = analogRead(PinECG);
+    ecg_reading = temp_reading[ecg_index % 10];
+    ecg_buffer[ecg_index] = ecg_reading;
     Patientdata.ECG[ecg_index] = ecg_reading;
 
     Serial.println(ecg_reading);
 
-    //rudimentary DSP
-    /*
-    if(ecg_reading < 300)
-    {
-      ecg_reading = ecg_avg;
-    }
-    else if((ecg_reading >= 300) && (ecg_reading < 500))
-    {
-      ecg_reading = 400;
-    }
-    else if((ecg_reading >= 500) && (ecg_reading < 700))
-    {
-      ecg_reading = 600;
-    }
-    else if((ecg_reading >= 700) && (ecg_reading < 900))
-    {
-      ecg_reading = 800;
-    }
-    else if((ecg_reading >= 900) && (ecg_reading < 1100))
-    {
-      ecg_reading = 1000;
-    }
-    else if((ecg_reading >= 1100) && (ecg_reading < 1300))
-    {
-      ecg_reading = 1200;
-    }
-    else if((ecg_reading >= 1300) && (ecg_reading < 1500))
-    {
-      ecg_reading = 1400;
-    }
-    else if((ecg_reading >= 1500) && (ecg_reading < 1700))
-    {
-      ecg_reading = 1600;
-    }
-    else if((ecg_reading >= 1700) && (ecg_reading < 1900))
-    {
-      ecg_reading = 1800;
-    }
-    else
-    {
-      ecg_reading = 2000;
-    }
-    */
 
     ecg_array_val = ecg_index % 25;
     ecg_data[ecg_array_val] = ecg_reading;
@@ -172,7 +134,14 @@ void ecg_measurement()
     //ecg_reading = ecg_reading / 40;
     //17
     ecg_index++;
-    timer.run(); //run Blynk timer
+
+    //wait for 10 seconds to start displaying data
+    if((endtime_ecg - starttime_ecg) >= 10000)
+    {
+      timer.run(); //run Blynk timer
+    }
+
+    
 
     //ecg_reading = ecg_reading % 220;
     //if(temp_index == 10)
@@ -316,59 +285,25 @@ void ecg_measurement()
       digit_box.pushSprite(163, 30);
     }
 
-    //tft.setTextColor(TFT_RED, TFT_GREEN);
-    //digit_box.pushSprite(160, 40);
-
-    //display heart rate
-    //char heartrate_string[10];
-    //sprintf(heartrate_string, "%02d", heartrate);
-    //hr_display.drawString(String(heartrate), 0, 0, 7);
-    //hr_display.drawString(heartrate_string, 0, 0, 7);
-    //hr_display.pushSprite(100, 30);
-
     delay(70);
     
-
-    //Serial.println("ECG: ");
-    //Serial.println(ecg_reading);
-
-    //Serial.println("HR ");
-    //Serial.println(BPM);
-
-    //Serial.println(ecg_control_value);
 
     if(initial_measurments < 50)
     {
       initial_measurments++;
     }
-    /*
-    static unsigned long lastTimer0 = 0;
-	  static bool timer0Stopped         = false;
-
-	  if (millis() - lastTimer0 > TIMER0_DURATION_MS)
-	  {
-	  	lastTimer0 = millis();
-
-	  	if (timer0Stopped)
-		  {
-		  	Serial.print(F("Start ITimer0, millis() = "));
-		  	Serial.println(millis());
-		  	ITimer0.restartTimer();
-		  }
-		  else
-	  	{
-		  	Serial.print(F("Stop ITimer0, millis() = "));
-		  	Serial.println(millis());
-		  	ITimer0.stopTimer();
-	  }
-
-		timer0Stopped = !timer0Stopped;
     
-    
-	}
-  */
+
     endtime_ecg = millis();
     
+  }
+
+  //continute to run timer until all ECG data used up
+  while(ecg_index < 350)
+  {
+    Blynk.run();
+    ecg_index++;
+    delay(90);
   }
 
   Blynk.virtualWrite(V50, 0); //reset ECG measurement button

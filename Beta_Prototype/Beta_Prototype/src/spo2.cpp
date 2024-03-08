@@ -99,7 +99,7 @@ void spo2_measurment()
     Serial.println("Could not communicate with the sensor!");
  
   Serial.println("Configuring Sensor...."); 
-  int error = bioHub.configBpm(MODE_ONE); // Configuring just the BPM settings. 
+  int error = bioHub.configBpm(MODE_TWO); // Configuring just the BPM settings. 
   if(error == 0){ // Zero errors!
     Serial.println("Sensor configured.");
   }
@@ -108,6 +108,45 @@ void spo2_measurment()
     Serial.print("Error: "); 
     Serial.println(error); 
   }
+
+
+  int width = 411; 
+  int samples = 400; 
+  int pulseWidthVal;
+  int sampleVal;
+
+  //set up pulse width and sample length
+  error = bioHub.setPulseWidth(width);
+  if (!error){
+    Serial.println("Pulse Width Set.");
+    }
+  else {
+    Serial.println("Could not set Pulse Width.");
+    Serial.print("Error: "); 
+    Serial.println(error); 
+  }
+
+  // Check that the pulse width was set. 
+  pulseWidthVal = bioHub.readPulseWidth();
+  Serial.print("Pulse Width: ");
+  Serial.println(pulseWidthVal);
+
+  // Set sample rate per second. Remember that not every sample rate is
+  // available with every pulse width. Check hookup guide for more information.  
+  error = bioHub.setSampleRate(samples);
+  if (!error){
+      Serial.println("Sample Rate Set.");
+  }
+  else {
+      Serial.println("Could not set Sample Rate!");
+      Serial.print("Error: "); 
+      Serial.println(error); 
+  }
+
+  // Check sample rate.
+  sampleVal = bioHub.readSampleRate();
+  Serial.print("Sample rate is set to: ");
+  Serial.println(sampleVal); 
 
   // Data lags a bit behind the sensor, if your finger is on the sensor when
   // it's being configured this delay will give some time for the data to catch
@@ -158,6 +197,7 @@ void spo2_measurment()
       body = bioHub.readBpm();
       
       finger_detect = body.status; // 0 = no finger, 3 = finger detected;
+
       
       Serial.print("Heartrate: ");
       Serial.println(body.heartRate); 
@@ -167,6 +207,8 @@ void spo2_measurment()
       Serial.println(body.oxygen);
       Serial.print("Status: ");
       Serial.println(body.status);
+      Serial.print("ExtStatus: ");
+      Serial.println(body.extStatus);
 
       // Slow it down or your heart rate will go up trying to keep up
       // with the flow of numbers
