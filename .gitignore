@@ -1,0 +1,46 @@
+# gitignore for Eagle Projects
+# this marks a comment
+# ** options:
+# **/logs        matches all files or directories named logs
+# **/logs/*.log  matches all files ending with .log in a logs directory
+# logs/**/*.log  matches all files ending with .log in logs or any subdirectories
+
+# Generics
+*.log
+*.tlog
+*.obj
+*.user
+*.suo
+*.sln.docstates
+/target/
+/.classpath
+/*.project
+/.settings
+/*.springBeans
+
+## Specified
+# Autodesk
+OldVersions
+*.ipj
+
+# EAGLE save files
+*.b#*
+*.s#*
+*.l#*
+*.epf
+
+# EAGLE CAM outputs
+**/CAMOutputs
+*.zip
+
+# Microsoft Temp Files
+*~$*
+
+# LTSpice Simulation Results
+*.log*
+*.raw*
+*.plt*
+*.net
+
+# Personal
+**/Orders
