@@ -25,15 +25,15 @@ extern int ecg_control_value;
 extern patientdata Patientdata;
 
 /* Define rotary encoder button */
-extern BfButton rotary_sw;
+//extern BfButton rotary_sw;
 
 /* Invoke display objects from TFT library */
-extern TFT_eSPI tft;  
-extern TFT_eSprite ecg;
-extern TFT_eSprite background;
-extern TFT_eSprite title;
-extern TFT_eSprite hr_display;
-extern TFT_eSprite digit_box;
+//extern TFT_eSPI tft;  
+//extern TFT_eSprite ecg;
+//extern TFT_eSprite background;
+//extern TFT_eSprite title;
+//extern TFT_eSprite hr_display;
+//extern TFT_eSprite digit_box;
 
 /* Global variables */
 int BPM = 0;
@@ -69,13 +69,26 @@ void read_ecg()
   //set interval to update app every half second
   timer.setInterval(90L, ECG_timer); 
   ecg_measurement();
+
+  /*
+  
+  All code will be transferred to the other ESP
+
+  Wire.begin(slaveSDA, slaveSCL);
+  Wire.begintransmission(127);
+  Wire.write("Get ECG Data");
+  Wire.endtransmission(true);
+  
+  */
+
+
 }
 
 
 
 void ecg_measurement()
 {
-  tft.fillScreen(TFT_BLUE);
+  //tft.fillScreen(TFT_BLUE);
   ecg_reading = 0;
   int ecg_counter = 0;
   int x2 = 0, y2 = 0, y2_prev = 0;
@@ -91,16 +104,16 @@ void ecg_measurement()
   int temp_reading[10] = {1500, 1400, 1500, 1200, 1100, 1900, 1300, 1500, 1500, 1500};
   int temp_index = 0;
 
-  hr_display.setTextColor(TFT_WHITE, TFT_BLUE);
+  //hr_display.setTextColor(TFT_WHITE, TFT_BLUE);
 
   //display heartrate
-  title.fillSprite(TFT_BLUE);
-  title.setTextColor(TFT_WHITE, TFT_BLUE);
-  title.drawString("HR: ", 0, 0);
-  title.pushSprite(30, 40);
+  //title.fillSprite(TFT_BLUE);
+  //title.setTextColor(TFT_WHITE, TFT_BLUE);
+  //title.drawString("HR: ", 0, 0);
+  //title.pushSprite(30, 40);
 
-  digit_box.setTextColor(TFT_BLACK, TFT_BLUE);
-  digit_box.fillSprite(TFT_BLUE);
+  //digit_box.setTextColor(TFT_BLACK, TFT_BLUE);
+  //digit_box.fillSprite(TFT_BLUE);
 
   
   starttime_ecg = millis();
@@ -151,22 +164,25 @@ void ecg_measurement()
     //ecg_reading = temp_reading[temp_index] / 14;
 
     //reset screen once it gets to edge
+    /*
     if(ecg_counter > (tft.width() / ecg_spacing))
     {
       ecg_counter = 0;
       tft.fillScreen(TFT_BLUE);
       title.pushSprite(30, 40);
     }
+    */
 
     //if counter reset, move x back to left side of screen
-    if(ecg_counter == 0)
-    {
-      xWriteIndex = 0;
-      yWriteIndex = (tft.height() - ecg_reading)/2;
+    //if(ecg_counter == 0)
+    //{
+      //xWriteIndex = 0;
+      //yWriteIndex = (tft.height() - ecg_reading)/2;
       //yWriteIndex = (double)(tft.height() - ecg_reading) / 1.5;
-    }
+    //}
 
     //if not on left side of screen, update indicies and display signal
+    /*
     if(ecg_counter > 0)
     {
       //y2_prev = y2;
@@ -203,16 +219,17 @@ void ecg_measurement()
       xWriteIndex = x2;
       yWriteIndex = y2;
     }
+    */
 
     ecg_counter++;
 
     //check for long press to go back to menu
-    rotary_sw.read();
+    //rotary_sw.read();
     if(what_press == 3)
     {
       //long press terminates the loop
       what_press = 0;
-      tft.fillScreen(TFT_WHITE);
+      //tft.fillScreen(TFT_WHITE);
      // ITimer0.stopTimer();
       break;
     }
@@ -223,7 +240,7 @@ void ecg_measurement()
     {
       //long press terminates the loop
       what_press = 0;
-      tft.fillScreen(TFT_WHITE);
+      //tft.fillScreen(TFT_WHITE);
       Blynk.virtualWrite(V50, 0); //reset ECG measurement button
       Blynk.virtualWrite(V56, "Previous Measurement Was Invalid");
       Patientdata.ECG_invalid = 1; //set invalid flag
@@ -280,9 +297,9 @@ void ecg_measurement()
     
     if(initial_measurments >= 50)
     {
-      hr_display.drawString(String(BPM), 0, 0, 7);
-      hr_display.pushSprite(100, 30);
-      digit_box.pushSprite(163, 30);
+      //hr_display.drawString(String(BPM), 0, 0, 7);
+      //hr_display.pushSprite(100, 30);
+      //digit_box.pushSprite(163, 30);
     }
 
     delay(70);

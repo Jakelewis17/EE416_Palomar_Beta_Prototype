@@ -28,12 +28,12 @@
 #include <Arduino.h>
 #include <SPI.h>
 #include "stdio.h"
-#include <TFT_eSPI.h>
-#include <BfButton.h>
+//#include <TFT_eSPI.h>
+//#include <BfButton.h>
 #include <Wire.h>
 #include <time.h>
-#include "ecg_sig.h"
-#include "title_font.h"
+//#include "ecg_sig.h"
+//#include "title_font.h"
 //#include "heartbeat/hb_frame0.h"
 //#include "heartbeat/hb_frame1.h"
 //#include "heartbeat/hb_frame2.h"
@@ -84,8 +84,8 @@ const int PinCLK = 27;
 const int PinDT = 14;
 const int PinSW = 13;
 const int PinECG = 34;
-//const int SDA_PIN = 21;
-//const int SCL_PIN = 22;
+const int slaveSDA = 21;
+const int slaveSCL = 22;
 const int PIN_GPIO = 19;
 const int PIN_SPO2_RST = 18;
 const int PINBP = 2;

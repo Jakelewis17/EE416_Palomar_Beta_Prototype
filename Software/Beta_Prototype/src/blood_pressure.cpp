@@ -16,6 +16,7 @@
  *                                                                             *
  ******************************************************************************/
 
+
 #include "patient_monitor.h"
 
 extern int what_press;
@@ -23,14 +24,14 @@ extern int what_press;
 extern patientdata Patientdata;
 
 /* Define rotary encoder button */
-extern BfButton rotary_sw;
+//extern BfButton rotary_sw;
 
 /* Invoke display objects from TFT library */
-extern TFT_eSPI tft;  
-extern TFT_eSprite ecg;
-extern TFT_eSprite background;
-extern TFT_eSprite title;
-extern TFT_eSprite bp_display;
+//extern TFT_eSPI tft;  
+//extern TFT_eSprite ecg;
+//extern TFT_eSprite background;
+//extern TFT_eSprite title;
+//extern TFT_eSprite bp_display;
 
 float pressureVolt = 100;
 
@@ -49,17 +50,17 @@ void BP_timer()
 void read_bp()
 {
   what_press = 0;
-  tft.fillScreen(TFT_BLACK);
+  //tft.fillScreen(TFT_BLACK);
 
   //display title
-  title.fillSprite(TFT_BLACK);
-  title.setTextColor(TFT_WHITE, TFT_BLACK);
-  title.drawString("BP", 0, 0);
-  title.pushSprite(90, 30);
+  //title.fillSprite(TFT_BLACK);
+  //title.setTextColor(TFT_WHITE, TFT_BLACK);
+  //title.drawString("BP", 0, 0);
+  //title.pushSprite(90, 30);
 
   //display instructions
-  tft.drawString("Click once to start", 0, 80, 4);
-  tft.drawString("Click twice to return", 0, 120, 4);
+  //tft.drawString("Click once to start", 0, 80, 4);
+  //tft.drawString("Click twice to return", 0, 120, 4);
 
   timer.setInterval(1000L, BP_timer); 
   for(int i = 0; i < 9; i++)
@@ -71,6 +72,7 @@ void read_bp()
   Blynk.virtualWrite(V52, bp_control_value);
   Blynk.virtualWrite(V58, "Measurement Complete, View Server for Details or Measure Again");  //ecg
   //bp_measurement();
+  
 
 /*
   for(;;) //infinite polling loop for switch input
@@ -100,8 +102,8 @@ void read_bp()
 void bp_measurement()
 {
 
-  tft.fillScreen(TFT_BLUE);
-  title.setTextColor(TFT_WHITE, TFT_BLUE);
+  //tft.fillScreen(TFT_BLUE);
+  //title.setTextColor(TFT_WHITE, TFT_BLUE);
   // Set air pump to stop
   digitalWrite(A1, LOW);
   digitalWrite(A2, LOW);
@@ -112,6 +114,7 @@ void bp_measurement()
 
   starttime_bp = millis();
   endtime_bp = starttime_bp;
+  
 
   cycleBPSystem();
   /*
@@ -154,7 +157,7 @@ void cycleBPSystem()
   openValve();
   //delay(30000);
   //closeValve();
-  tft.fillScreen(TFT_BLUE);
+  //tft.fillScreen(TFT_BLUE);
 }
 
 void openValve()
@@ -215,7 +218,7 @@ void stopPump()
 void displayBP(float pressure)
 {
   //display BP voltage
-  tft.drawString("Pressure Voltage: ", 30, 60, 4);
-  bp_display.drawString(String(pressure), 0, 0, 7);
-  bp_display.pushSprite(50, 150);
+  //tft.drawString("Pressure Voltage: ", 30, 60, 4);
+  //bp_display.drawString(String(pressure), 0, 0, 7);
+  //bp_display.pushSprite(50, 150);
 }

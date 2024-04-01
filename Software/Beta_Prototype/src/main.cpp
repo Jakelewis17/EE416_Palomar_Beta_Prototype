@@ -28,9 +28,11 @@ int bp_control_value = -1;
 patientdata Patientdata;
 
 /* Define rotary encoder button */
-BfButton rotary_sw(BfButton::STANDALONE_DIGITAL, PinSW, true, LOW);
+//BfButton rotary_sw(BfButton::STANDALONE_DIGITAL, PinSW, true, LOW);
+
 
 /* Invoke display objects from TFT library */
+/*
 TFT_eSPI tft = TFT_eSPI();  
 TFT_eSprite ecg = TFT_eSprite(&tft);
 TFT_eSprite background = TFT_eSprite(&tft);
@@ -39,12 +41,13 @@ TFT_eSprite digit_box = TFT_eSprite(&tft);
 TFT_eSprite hr_display = TFT_eSprite(&tft);
 TFT_eSprite spo2_display = TFT_eSprite(&tft);
 TFT_eSprite bp_display = TFT_eSprite(&tft);
+*/
 
 MAX30105 particleSensor;
 
 /* Define interrupt variables */
-volatile boolean TurnDetected; //need volatile for interrupts
-volatile boolean SWDetected; 
+//volatile boolean TurnDetected; //need volatile for interrupts
+//volatile boolean SWDetected; 
 
 /*  Main Variable Definitions */
 int PreviousCLK;
@@ -67,13 +70,14 @@ BlynkWifi Blynk(_blynkTransport);
 BlynkTimer timer;
 
 /* Define interrupt routines for KY-040 rotary encoder */
-void rotarydetect()
-{
+//void rotarydetect()
+//{
   //interrupt routine runs if CLK pin changes state
-  TurnDetected = true;
-}
+  //TurnDetected = true;
+//}
 
 /* Encoder press handler */
+/*
 void swHandler(BfButton* btn, BfButton::press_pattern_t pattern)
 {
   //update what_press variable depending on type of input from button
@@ -95,6 +99,7 @@ void swHandler(BfButton* btn, BfButton::press_pattern_t pattern)
     break;
   }
 }
+*/
 
 BLYNK_WRITE(V50) //ECG Control
 {   
@@ -160,23 +165,26 @@ void setup() {
   pinMode(valveSwitch, OUTPUT);
 
   //set up interrupt
-  attachInterrupt(PinCLK, rotarydetect, CHANGE); 
+  //attachInterrupt(PinCLK, rotarydetect, CHANGE); 
 
   //Encoder button setup
-  rotary_sw.onPress(swHandler)
-  .onDoublePress(swHandler)
-  .onPressFor(swHandler, 1000);
+  //rotary_sw.onPress(swHandler)
+  //.onDoublePress(swHandler)
+  //.onPressFor(swHandler, 1000);
 
   /* TFT display setup */
+  /*
   tft.init();
   tft.setRotation(14);
   tft.fillScreen(TFT_BLACK);
   tft.invertDisplay( true ); //invert display colors for proper displaying
   tft.setSwapBytes(true);
   tft.setTextWrap(true, true);
+  */
 
 
   /* TFT sprites setup*/
+  /*
   ecg.createSprite(240,107); //create sprite for ecg waveform
   ecg.setSwapBytes(true);
 
@@ -185,11 +193,11 @@ void setup() {
 
   title.createSprite(120,90); //create sprite for physilogical parameter titles
   title.setTextColor(TFT_BLACK, TFT_WHITE);
-  title.setFreeFont(&Dialog_plain_35); //custom font
+  //title.setFreeFont(&Dialog_plain_35); //custom font
 
   digit_box.createSprite(35,50); //create sprite for physilogical parameter titles
   digit_box.setTextColor(TFT_BLACK, TFT_WHITE);
-  digit_box.setFreeFont(&Dialog_plain_35); //custom font
+  //digit_box.setFreeFont(&Dialog_plain_35); //custom font
 
   hr_display.createSprite(93, 47);
   hr_display.setSwapBytes(true);
@@ -205,6 +213,7 @@ void setup() {
 
   
   tft.fillScreen(TFT_WHITE); //fill the screen with white
+  */
 
   //send status of "Idle" for each measurementto app
   Blynk.virtualWrite(V56, "Idle");  //ecg
@@ -222,7 +231,7 @@ void loop() {
   Blynk.run();
 
   
-
+/*
 if(TurnDetected) //check if rotary encoder detected an input
 {
   TurnDetected = false;
@@ -260,12 +269,14 @@ if(TurnDetected) //check if rotary encoder detected an input
   }
 
 }
+*/
 
 //Serial.print((count % 3));
 /* Check what parameter should be displayed and display it */
+/*
 if((count % 3) == 0)
 {
-  /* ECG Parameter */
+  // ECG Parameter 
 
   //change background color
   if(bg_color != 0)
@@ -279,7 +290,7 @@ if((count % 3) == 0)
   title.drawString("ECG", 45, 35);
 
   //display ecg waveform image
-  ecg.pushImage(0,0,240,107,ecg_sig);
+  //ecg.pushImage(0,0,240,107,ecg_sig);
   ecg.pushSprite(ecg_position, 133, TFT_BLACK);
   
   //Create flashing behind text
@@ -298,7 +309,7 @@ if((count % 3) == 0)
   }
 
   //push ECG sprite
-  ecg.pushImage(0,0,240,107,ecg_sig);
+  //ecg.pushImage(0,0,240,107,ecg_sig);
   ecg.pushSprite(ecg_position,133, TFT_WHITE);
 
   title.pushSprite(35, 30);
@@ -306,7 +317,7 @@ if((count % 3) == 0)
 }
 else if((count % 3) == 1)
 {
-  /* Blood Pressure Paramter */
+  // Blood Pressure Paramter
 
   //change background color
   if(bg_color != 1)
@@ -327,7 +338,7 @@ else if((count % 3) == 1)
 }
 else  
 {
-  /* SPO2 Parameter */
+  // SPO2 Parameter
 
   //change background color
   if(bg_color != 2)
@@ -357,7 +368,7 @@ else
 
 }
 
-  /* Detect a push of the rotary encoder and enter measurement */
+  // Detect a push of the rotary encoder and enter measurement 
   rotary_sw.read();
   if((what_press == 1) && ((count % 3) == 0))
   {
@@ -376,6 +387,7 @@ else
   }
 
   what_press = 0;
+  */
 
   //app control
   if(what_param == 1)
@@ -404,6 +416,9 @@ else
 
 void sendData()
 {
+  //connect to slave ESP
+  Wire.begin(slaveSDA, slaveSCL);
+
   //get time
   time_t t = time(NULL);
   struct tm tm = *localtime(&t);
@@ -424,7 +439,16 @@ void sendData()
   Serial.print("Date: ");
   Serial.println(Patientdata.date);
   Serial.print("ECG: ");
-  
+
+  Wire.beginTransmission(127);
+  Wire.write("Patient Data Incoming");
+  Wire.write(Patientdata.Spo2);
+  Wire.write(Patientdata.SpO2_invalid);
+  Wire.write(Patientdata.BP);
+  Wire.write(Patientdata.BP_invalid);
+  Wire.write(Patientdata.Heartrate);
+  Wire.write(Patientdata.date);
+  Wire.endTransmission(true);
 
   //reset all values back to 0
   Patientdata.Spo2 = 0;
