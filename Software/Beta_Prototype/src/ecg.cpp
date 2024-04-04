@@ -24,16 +24,6 @@ extern int ecg_control_value;
 
 extern patientdata Patientdata;
 
-/* Define rotary encoder button */
-//extern BfButton rotary_sw;
-
-/* Invoke display objects from TFT library */
-//extern TFT_eSPI tft;  
-//extern TFT_eSprite ecg;
-//extern TFT_eSprite background;
-//extern TFT_eSprite title;
-//extern TFT_eSprite hr_display;
-//extern TFT_eSprite digit_box;
 
 /* Global variables */
 int BPM = 0;
@@ -52,6 +42,7 @@ int ecg_buffer[350] = { 0 };
 
 /* Extern Blynk timer */
 extern BlynkTimer timer;
+extern BlynkWifi Blynk;
 
 /* Define timer for sending data to app */
 void ECG_timer() 
@@ -69,18 +60,6 @@ void read_ecg()
   //set interval to update app every half second
   timer.setInterval(90L, ECG_timer); 
   ecg_measurement();
-
-  /*
-  
-  All code will be transferred to the other ESP
-
-  Wire.begin(slaveSDA, slaveSCL);
-  Wire.begintransmission(127);
-  Wire.write("Get ECG Data");
-  Wire.endtransmission(true);
-  
-  */
-
 
 }
 
@@ -103,18 +82,6 @@ void ecg_measurement()
 
   int temp_reading[10] = {1500, 1400, 1500, 1200, 1100, 1900, 1300, 1500, 1500, 1500};
   int temp_index = 0;
-
-  //hr_display.setTextColor(TFT_WHITE, TFT_BLUE);
-
-  //display heartrate
-  //title.fillSprite(TFT_BLUE);
-  //title.setTextColor(TFT_WHITE, TFT_BLUE);
-  //title.drawString("HR: ", 0, 0);
-  //title.pushSprite(30, 40);
-
-  //digit_box.setTextColor(TFT_BLACK, TFT_BLUE);
-  //digit_box.fillSprite(TFT_BLUE);
-
   
   starttime_ecg = millis();
   endtime_ecg = starttime_ecg;
@@ -154,72 +121,6 @@ void ecg_measurement()
       timer.run(); //run Blynk timer
     }
 
-    
-
-    //ecg_reading = ecg_reading % 220;
-    //if(temp_index == 10)
-    //{
-     // temp_index = 0;
-    //}
-    //ecg_reading = temp_reading[temp_index] / 14;
-
-    //reset screen once it gets to edge
-    /*
-    if(ecg_counter > (tft.width() / ecg_spacing))
-    {
-      ecg_counter = 0;
-      tft.fillScreen(TFT_BLUE);
-      title.pushSprite(30, 40);
-    }
-    */
-
-    //if counter reset, move x back to left side of screen
-    //if(ecg_counter == 0)
-    //{
-      //xWriteIndex = 0;
-      //yWriteIndex = (tft.height() - ecg_reading)/2;
-      //yWriteIndex = (double)(tft.height() - ecg_reading) / 1.5;
-    //}
-
-    //if not on left side of screen, update indicies and display signal
-    /*
-    if(ecg_counter > 0)
-    {
-      //y2_prev = y2;
-      x2 = ecg_counter * ecg_spacing;
-      //y2 = (double)(tft.height() - ecg_reading + 30) / 1.5;
-      y2 = (tft.height() - ecg_reading + 30) / 2;
-
-
-      //get average for first 10 cycles first
-      
-      if(bin_count == 20)
-      {
-        bin_count = 0;
-      }
-
-      bin[bin_count] = y2;
-      bin_count++;
-
-      //get average of bin
-      for(int i = 0; i < 20; i++)
-      {
-        bin_total = bin_total + bin[i];
-      }
-      bin_avg = bin_total / 20;
-
-
-      if((y2 - bin_avg > 100) || (bin_avg - y2 < 100))
-      {
-        y2 = bin_avg;
-      }
-      
-
-      tft.drawLine(xWriteIndex, yWriteIndex, x2, y2, TFT_WHITE);
-      xWriteIndex = x2;
-      yWriteIndex = y2;
-    }
-    */
 
     ecg_counter++;
 
@@ -268,16 +169,6 @@ void ecg_measurement()
       heartbeat_flag = 0;
     }
 
-    //logic for displaying correctly
-    //if((prev_hr >= 100) && (heartrate < 100))
-   // {
-      //hr_display.drawString(String(0), 100, 30, 7);
-      //hr_display.fillSprite(TFT_BLUE);
-
-      //fix extra digit issue
-      //digit_box.pushSprite(160, 40);
-
-    //}
 
     if(BPM < 100)
     {
@@ -295,12 +186,7 @@ void ecg_measurement()
       belowThreshold = true;
     }
     
-    if(initial_measurments >= 50)
-    {
-      //hr_display.drawString(String(BPM), 0, 0, 7);
-      //hr_display.pushSprite(100, 30);
-      //digit_box.pushSprite(163, 30);
-    }
+    
 
     delay(70);
     

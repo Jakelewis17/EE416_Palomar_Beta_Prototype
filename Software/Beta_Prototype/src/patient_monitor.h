@@ -28,30 +28,14 @@
 #include <Arduino.h>
 #include <SPI.h>
 #include "stdio.h"
-//#include <TFT_eSPI.h>
-//#include <BfButton.h>
 #include <Wire.h>
 #include <time.h>
-//#include "ecg_sig.h"
-//#include "title_font.h"
-//#include "heartbeat/hb_frame0.h"
-//#include "heartbeat/hb_frame1.h"
-//#include "heartbeat/hb_frame2.h"
-//#include "heartbeat/hb_frame3.h"
-//#include "heartbeat/hb_frame4.h"
-//#include "SPO2_gif/SPO2_frame0.h"
-//#include "SPO2_gif/SPO2_frame1.h"
-//#include "SPO2_gif/SPO2_frame2.h"
-//#include "SPO2_gif/SPO2_frame3.h"
-//#include "SPO2_gif/SPO2_frame4.h"
-//#include "MAX30100_PulseOximeter.h"
 #include "MAX30105.h"
 #include "spo2_algorithm.h"
 #include <WiFi.h>
 #include <WiFiClient.h>
 #include <BlynkSimpleEsp32.h>
 #include <SparkFun_Bio_Sensor_Hub_Library.h>
-//#include "ESP32TimerInterrupt.h"
 
 #define REPORTING_PERIOD_MS     1000
 #define MAX_BRIGHTNESS 255

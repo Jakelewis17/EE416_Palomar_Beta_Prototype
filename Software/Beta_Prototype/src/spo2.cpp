@@ -23,20 +23,6 @@ extern int spo2_control_value;
 
 extern patientdata Patientdata;
 
-/* Define rotary encoder button */
-//extern BfButton rotary_sw;
-
-/* Invoke display objects from TFT library */
-/*
-extern TFT_eSPI tft;  
-extern TFT_eSprite ecg;
-extern TFT_eSprite background;
-extern TFT_eSprite title;
-extern TFT_eSprite digit_box;
-extern TFT_eSprite hr_display;
-extern TFT_eSprite spo2_display;
-*/
-
 extern BlynkWifi Blynk;
 extern BlynkTimer timer;
 
@@ -70,19 +56,6 @@ void SpO2_timer()
 void read_spo2()
 {
   what_press = 0;
-  /*
-  tft.fillScreen(TFT_BLACK);
-
-  //display title
-  title.fillSprite(TFT_BLACK);
-  title.setTextColor(TFT_WHITE, TFT_BLACK);
-  title.drawString("SPO2", 0, 0);
-  title.pushSprite(70, 30);
-
-  //display instructions
-  tft.drawString("Click once to start", 0, 80, 4);
-  tft.drawString("Click twice to return", 0, 120, 4);
-  */
 
   timer.setInterval(1000L, SpO2_timer); 
   spo2_measurment();
@@ -156,37 +129,10 @@ void spo2_measurment()
   // it's being configured this delay will give some time for the data to catch
   // up. 
   Serial.println("Loading up the buffer with data....");
- 
-  //display "calibrating" screen
-  //tft.fillScreen(TFT_BLACK);
-  //tft.setTextColor(TFT_WHITE, TFT_BLACK);
-  //tft.setFreeFont(&Dialog_plain_35); //custom font
-  //tft.drawString("Calibrating...: ", 15, 115);
   
   delay(500);
 
-  /*
-  tft.fillScreen(TFT_BLUE);
-  title.fillSprite(TFT_BLUE);
-  title.setTextColor(TFT_WHITE, TFT_BLUE);
-  title.drawString("SPO2: ", 0, 0);
-  title.pushSprite(70, 60);
-
-  digit_box.setTextColor(TFT_BLACK, TFT_BLUE);
-  digit_box.fillSprite(TFT_BLUE);
-  */
-
   int finger_detect = 0; // temp variable
-
-  //after loading display
-  /*
-  tft.fillScreen(TFT_BLUE);
-  spo2_display.drawString(String(body.oxygen), 0, 0, 7);
-  spo2_display.pushSprite(80, 150);
-  title.setTextColor(TFT_WHITE, TFT_BLUE);
-  title.pushSprite(70, 60);
-  digit_box.pushSprite(143, 150);
-  */
 
   int spo2_index = 0;
   starttime_spo2 = millis();
@@ -225,12 +171,10 @@ void spo2_measurment()
       if (finger_detect == 3) 
       {  
         calculateSpO2(spo2_index);
-        calculateHR(spo2_index);
-        display_spo2(3);      
+        calculateHR(spo2_index);  
         spo2_index++;  //update index only if finger_detected
       }
       else if (finger_detect == 0) {
-        display_spo2(0);
         Blynk.virtualWrite(V57, "No Finger Detected"); 
       }
 
@@ -263,32 +207,6 @@ void spo2_measurment()
 
   Blynk.virtualWrite(V51, 0); //reset spo2 measurement button
   Blynk.virtualWrite(V57, "Measurement Complete, View Server for Details or Measure Again");  
-
-}
-
-
-void display_spo2(int finger_detect)
-{
-
-  if(finger_detect == 0)
-  {
-    //no finger detected - display 0
-   // spo2_display.drawString("000", 0, 0, 7);
-    //spo2_display.pushSprite(80, 150);
-  }
-  else
-  {  
-    //display average SPO2
-   // spo2_display.drawString(String(body.oxygen), 0, 0, 7);
-   // spo2_display.pushSprite(80, 150);
-
-    if(body.oxygen < 100)
-    {
-      //fix extra digit issue
-      //digit_box.pushSprite(143, 150);
-    }      
-  }
-
 
 }
 
