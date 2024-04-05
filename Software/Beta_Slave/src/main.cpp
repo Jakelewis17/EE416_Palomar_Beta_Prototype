@@ -5,22 +5,21 @@ int myFunction(int, int);
 
 void setup() {
   // put your setup code here, to run once:
-  int result = myFunction(2, 3);
+  Serial.begin(115200);
+  Serial.println("Hello from startup");
+
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
-}
-
-// put function definitions here:
-int myFunction(int x, int y) {
-  return x + y;
+  receiveData();
 }
 
 void receiveData()
 {
   //connect to slave ESP
   Wire.begin(slaveSDA, slaveSCL);
+  Wire.onReceive(receiveEvent);
 
   //get time
   time_t t = time(NULL);
@@ -67,4 +66,15 @@ void receiveData()
     Serial.print(Patientdata.ECG[i]);
     Patientdata.ECG[i] = 0;
   }
+}
+
+void receiveEvent(int howMany)
+{
+  while(1 < Wire.available()) // loop through all but the last
+  {
+    char c = Wire.read(); // receive byte as a character
+    Serial.print(c);         // print the character
+  }
+  int x = Wire.read();    // receive byte as an integer
+  Serial.println(x);         // print the integer
 }
