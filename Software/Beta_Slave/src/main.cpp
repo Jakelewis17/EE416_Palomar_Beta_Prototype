@@ -79,7 +79,7 @@
 //   int x = Wire.read();    // receive byte as an integer
 //   Serial.println(x);         // print the integer
 // }
-#define SLAVE_ADDRESS 4
+
 
 patientdata Patientdata; // Global variable to store received data
 
@@ -93,6 +93,7 @@ void loop() {
   // Slave does nothing in loop
 }
 
+/*
 void receiveEvent(int howMany) {
   if (howMany >= sizeof(patientdata)) {
     uint8_t buffer[sizeof(patientdata)];
@@ -118,7 +119,48 @@ void receiveEvent(int howMany) {
     }
   }
 }
+*/
 
 void deserializePatientData(patientdata& data, const uint8_t* buffer) {
     memcpy(&data, buffer, sizeof(patientdata));
+}
+
+void receiveEvent(int howMany)
+{
+  Serial.println("In receive event");
+  int Master_selection = Wire.read();    // receive byte as an integer
+
+  if(Master_selection == 0) //receive patientdata and send to webserver
+  {
+    send_to_webserver();
+  }
+  else if (Master_selection == 1) //Do ECG measurement and send data back 
+  {
+    ECG_Measurement();
+  }
+}
+
+
+
+void send_to_webserver()
+{
+
+}
+
+
+void ECG_Measurement()
+{
+  Serial.println("In ECG Measurement");
+   //Zack ECG code here
+
+   //temp for testing
+   for(int i = 0; i < 1000; i++)
+   {
+    Wire.beginTransmission(SLAVE_ADDRESS); // transmit to device 127
+    Patientdata.ECG[i] = i;
+    Wire.write(Patientdata.ECG[i]);
+    Wire.endTransmission();    // stop transmitting
+   }
+
+  
 }

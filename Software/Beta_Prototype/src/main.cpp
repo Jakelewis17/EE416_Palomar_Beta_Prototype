@@ -86,8 +86,7 @@ BLYNK_WRITE(V62) //User Enter
   int pinValue = param.asInt(); // assigning incoming value from pin V62 to a variable
   
   if (pinValue == 1){
-   // do something when button is pressed;
-   sendData();
+     sendData();
   } else if (pinValue == 0) {
    // do something when button is released;
   }
@@ -187,13 +186,14 @@ void sendData()
   Serial.print("ECG: ");
 
   Wire.beginTransmission(127);
-  Wire.write("Patient Data Incoming");
+  Wire.write(0); // 0 indicates patient data is incoming
   Wire.write(Patientdata.Spo2);
   Wire.write(Patientdata.SpO2_invalid);
   Wire.write(Patientdata.BP);
   Wire.write(Patientdata.BP_invalid);
   Wire.write(Patientdata.Heartrate);
   Wire.write(Patientdata.date);
+  //Wire.write(Patientdata.ECG);
   Wire.endTransmission(true);
 
   //reset all values back to 0

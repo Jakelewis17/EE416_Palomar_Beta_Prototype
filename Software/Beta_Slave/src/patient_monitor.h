@@ -47,6 +47,7 @@
 
 // #define TIMER0_INTERVAL_MS        1000
 // #define TIMER0_DURATION_MS        5000
+#define SLAVE_ADDRESS 127
 
 struct patientdata{
     int Spo2;
@@ -106,5 +107,7 @@ void receiveData();
 void receiveEvent(int howMany);
 void sendDataToSlave(patientdata* data);
 void deserializePatientData(patientdata& data, const uint8_t* buffer);
+void ECG_Measurement();
+void send_to_webserver();
 
 #endif

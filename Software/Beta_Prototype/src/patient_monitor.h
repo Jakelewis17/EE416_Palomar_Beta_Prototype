@@ -104,5 +104,7 @@ void displayBP(float pressure);
 
 void sendData();
 
+void ECGreceiveEvent(int howMany);
+
 
 #endif

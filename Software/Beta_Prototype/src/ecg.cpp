@@ -39,6 +39,7 @@ int ecg_data[25] = { 0 };
 int ecg_avg = 0, ecg_array_val = 0, ecg_temp = 0, ecg_total = 0;
 int ecg_index = 0;
 int ecg_buffer[350] = { 0 };
+int ECG_index = 0;
 
 /* Extern Blynk timer */
 extern BlynkTimer timer;
@@ -48,19 +49,73 @@ extern BlynkWifi Blynk;
 void ECG_timer() 
 {
   //Write to virtual pin 53 (ECG data)
-  Blynk.virtualWrite(V53, ecg_reading);  
-  Blynk.virtualWrite(V53, ecg_buffer[ecg_index]);
+  //Blynk.virtualWrite(V53, ecg_reading);  
+  //Blynk.virtualWrite(V53, ecg_buffer[ecg_index]);
+  Blynk.virtualWrite(V53, Patientdata.ECG[ECG_index]);
+  Serial.println("In ECG_Timer");
+  Serial.println(Patientdata.ECG[ECG_index]);
+  ECG_index++; 
 }
 
 
 void read_ecg()
 {
   what_press = 0;
-  
-  //set interval to update app every half second
-  timer.setInterval(90L, ECG_timer); 
-  ecg_measurement();
 
+  Blynk.virtualWrite(V56, "Measurement in Progress");  
+  
+  //set interval to update app every 10th of a second
+  timer.setInterval(100L, ECG_timer); 
+
+  //ecg_measurement();
+  byte x = 1;
+
+  //send flag to slave to start ECG measurement
+  Wire.begin();
+  Serial.println("Before Transmission");
+  Wire.beginTransmission(127);
+  Serial.println("Before write");
+  Wire.write(x); // 1 indicates ECG measurement
+  Wire.endTransmission();   
+  Serial.println("Before receive");
+  Wire.onReceive(ECGreceiveEvent);
+  Serial.println("After receive");
+  while(ECG_index < 1000); //wait for enough data to accumulate
+  ECG_index = 0; //reset index
+
+  while(ECG_index < 1000) //run until all data has been sent
+  {
+    timer.run(); //run Blynk timer and send data
+    Blynk.run();
+
+    if(ecg_control_value == 0) //check to see if measurement terminated early
+    {
+      Blynk.virtualWrite(V50, 0); //reset ECG measurement button
+      Blynk.virtualWrite(V56, "Previous Measurement Was Invalid");
+      Patientdata.ECG_invalid = 1; //set invalid flag
+      break;
+    }
+
+  }
+
+  Blynk.virtualWrite(V50, 0); //reset ECG measurement button
+  Blynk.virtualWrite(V56, "Measurement Complete, View Server for Details or Measure Again");  //ecg
+
+  return;
+
+}
+
+void ECGreceiveEvent(int howMany)
+{
+  
+  while(0 < Wire.available()) // loop through all but the last
+  {
+    int ECG_data = Wire.read();    // receive byte as an integer
+    Patientdata.ECG[ECG_index] = ECG_data; //store data into array
+    Serial.print(ECG_data);        
+    ECG_index++;
+  }
+  
 }
 
 
