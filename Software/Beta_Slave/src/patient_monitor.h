@@ -102,7 +102,9 @@ void pumpOn();
 void stopPump();
 void displayBP(float pressure);
 
-void sendData();
-
+void receiveData();
+void receiveEvent(int howMany);
+void sendDataToSlave(patientdata* data);
+void deserializePatientData(patientdata& data, const uint8_t* buffer);
 
 #endif

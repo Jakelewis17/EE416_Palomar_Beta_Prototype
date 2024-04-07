@@ -83,7 +83,14 @@ BLYNK_WRITE(V61) //User Enter
 
 BLYNK_WRITE(V62) //User Enter
 {   
-  sendData();
+  int pinValue = param.asInt(); // assigning incoming value from pin V62 to a variable
+  
+  if (pinValue == 1){
+   // do something when button is pressed;
+   sendData();
+  } else if (pinValue == 0) {
+   // do something when button is released;
+  }
 }
 
 
@@ -120,8 +127,6 @@ void setup() {
   Blynk.virtualWrite(V58, "Idle");  //bp
 
   delay(500);
-
-
 }
 
 /* Infinite Loop Function */
@@ -158,7 +163,7 @@ void loop() {
 void sendData()
 {
   //connect to slave ESP
-  Wire.begin(slaveSDA, slaveSCL);
+  Wire.begin();
 
   //get time
   time_t t = time(NULL);
