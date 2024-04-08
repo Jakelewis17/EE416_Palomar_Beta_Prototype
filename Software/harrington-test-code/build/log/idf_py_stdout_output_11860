@@ -1,0 +1,47 @@
+-- Existing sdkconfig 'C:/git/EE416_Palomar_Beta_Prototype/Software/harrington-test-code/sdkconfig' renamed to 'C:/git/EE416_Palomar_Beta_Prototype/Software/harrington-test-code/sdkconfig.old'.
+-- Found Git: C:/Users/zwhar/.espressif/tools/idf-git/2.39.2/cmd/git.exe (found version "2.39.2.windows.1") 
+-- The C compiler identification is GNU 12.2.0
+-- The CXX compiler identification is GNU 12.2.0
+-- The ASM compiler identification is GNU
+-- Found assembler: C:/Users/zwhar/.espressif/tools/xtensa-esp32-elf/esp-12.2.0_20230208/xtensa-esp32-elf/bin/xtensa-esp32-elf-gcc.exe
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: C:/Users/zwhar/.espressif/tools/xtensa-esp32-elf/esp-12.2.0_20230208/xtensa-esp32-elf/bin/xtensa-esp32-elf-gcc.exe - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: C:/Users/zwhar/.espressif/tools/xtensa-esp32-elf/esp-12.2.0_20230208/xtensa-esp32-elf/bin/xtensa-esp32-elf-g++.exe - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Building ESP-IDF components for target esp32
+Processing 2 dependencies:
+[1/2] espressif/led_strip (2.5.3)
+[2/2] idf (5.1.2)
+-- Project sdkconfig file C:/git/EE416_Palomar_Beta_Prototype/Software/harrington-test-code/sdkconfig
+-- Looking for sys/types.h
+-- Looking for sys/types.h - found
+-- Looking for stdint.h
+-- Looking for stdint.h - found
+-- Looking for stddef.h
+-- Looking for stddef.h - found
+-- Check size of time_t
+-- Check size of time_t - done
+-- Found Python3: C:/Users/zwhar/.espressif/python_env/idf5.1_py3.11_env/Scripts/python.exe (found version "3.11.2") found components: Interpreter 
+-- Performing Test C_COMPILER_SUPPORTS_WFORMAT_SIGNEDNESS
+-- Performing Test C_COMPILER_SUPPORTS_WFORMAT_SIGNEDNESS - Success
+-- App "harrington-test-code" version: 1af32db
+-- Adding linker script C:/git/EE416_Palomar_Beta_Prototype/Software/harrington-test-code/build/esp-idf/esp_system/ld/memory.ld
+-- Adding linker script C:/Users/zwhar/esp/esp-idf/components/esp_system/ld/esp32/sections.ld.in
+-- Adding linker script C:/Users/zwhar/esp/esp-idf/components/esp_rom/esp32/ld/esp32.rom.ld
+-- Adding linker script C:/Users/zwhar/esp/esp-idf/components/esp_rom/esp32/ld/esp32.rom.api.ld
+-- Adding linker script C:/Users/zwhar/esp/esp-idf/components/esp_rom/esp32/ld/esp32.rom.libgcc.ld
+-- Adding linker script C:/Users/zwhar/esp/esp-idf/components/esp_rom/esp32/ld/esp32.rom.newlib-data.ld
+-- Adding linker script C:/Users/zwhar/esp/esp-idf/components/esp_rom/esp32/ld/esp32.rom.syscalls.ld
+-- Adding linker script C:/Users/zwhar/esp/esp-idf/components/esp_rom/esp32/ld/esp32.rom.newlib-funcs.ld
+-- Adding linker script C:/Users/zwhar/esp/esp-idf/components/soc/esp32/ld/esp32.peripherals.ld
+-- Components: app_trace app_update bootloader bootloader_support bt cmock console cxx driver efuse esp-tls esp_adc esp_app_format esp_coex esp_common esp_eth esp_event esp_gdbstub esp_hid esp_http_client esp_http_server esp_https_ota esp_https_server esp_hw_support esp_lcd esp_local_ctrl esp_mm esp_netif esp_netif_stack esp_partition esp_phy esp_pm esp_psram esp_ringbuf esp_rom esp_system esp_timer esp_wifi espcoredump espressif__led_strip esptool_py fatfs freertos hal heap http_parser idf_test ieee802154 json log lwip main mbedtls mqtt newlib nvs_flash openthread partition_table perfmon protobuf-c protocomm pthread sdmmc soc spi_flash spiffs tcp_transport ulp unity usb vfs wear_levelling wifi_provisioning wpa_supplicant xtensa
+-- Component paths: C:/Users/zwhar/esp/esp-idf/components/app_trace C:/Users/zwhar/esp/esp-idf/components/app_update C:/Users/zwhar/esp/esp-idf/components/bootloader C:/Users/zwhar/esp/esp-idf/components/bootloader_support C:/Users/zwhar/esp/esp-idf/components/bt C:/Users/zwhar/esp/esp-idf/components/cmock C:/Users/zwhar/esp/esp-idf/components/console C:/Users/zwhar/esp/esp-idf/components/cxx C:/Users/zwhar/esp/esp-idf/components/driver C:/Users/zwhar/esp/esp-idf/components/efuse C:/Users/zwhar/esp/esp-idf/components/esp-tls C:/Users/zwhar/esp/esp-idf/components/esp_adc C:/Users/zwhar/esp/esp-idf/components/esp_app_format C:/Users/zwhar/esp/esp-idf/components/esp_coex C:/Users/zwhar/esp/esp-idf/components/esp_common C:/Users/zwhar/esp/esp-idf/components/esp_eth C:/Users/zwhar/esp/esp-idf/components/esp_event C:/Users/zwhar/esp/esp-idf/components/esp_gdbstub C:/Users/zwhar/esp/esp-idf/components/esp_hid C:/Users/zwhar/esp/esp-idf/components/esp_http_client C:/Users/zwhar/esp/esp-idf/components/esp_http_server C:/Users/zwhar/esp/esp-idf/components/esp_https_ota C:/Users/zwhar/esp/esp-idf/components/esp_https_server C:/Users/zwhar/esp/esp-idf/components/esp_hw_support C:/Users/zwhar/esp/esp-idf/components/esp_lcd C:/Users/zwhar/esp/esp-idf/components/esp_local_ctrl C:/Users/zwhar/esp/esp-idf/components/esp_mm C:/Users/zwhar/esp/esp-idf/components/esp_netif C:/Users/zwhar/esp/esp-idf/components/esp_netif_stack C:/Users/zwhar/esp/esp-idf/components/esp_partition C:/Users/zwhar/esp/esp-idf/components/esp_phy C:/Users/zwhar/esp/esp-idf/components/esp_pm C:/Users/zwhar/esp/esp-idf/components/esp_psram C:/Users/zwhar/esp/esp-idf/components/esp_ringbuf C:/Users/zwhar/esp/esp-idf/components/esp_rom C:/Users/zwhar/esp/esp-idf/components/esp_system C:/Users/zwhar/esp/esp-idf/components/esp_timer C:/Users/zwhar/esp/esp-idf/components/esp_wifi C:/Users/zwhar/esp/esp-idf/components/espcoredump C:/git/EE416_Palomar_Beta_Prototype/Software/harrington-test-code/managed_components/espressif__led_strip C:/Users/zwhar/esp/esp-idf/components/esptool_py C:/Users/zwhar/esp/esp-idf/components/fatfs C:/Users/zwhar/esp/esp-idf/components/freertos C:/Users/zwhar/esp/esp-idf/components/hal C:/Users/zwhar/esp/esp-idf/components/heap C:/Users/zwhar/esp/esp-idf/components/http_parser C:/Users/zwhar/esp/esp-idf/components/idf_test C:/Users/zwhar/esp/esp-idf/components/ieee802154 C:/Users/zwhar/esp/esp-idf/components/json C:/Users/zwhar/esp/esp-idf/components/log C:/Users/zwhar/esp/esp-idf/components/lwip C:/git/EE416_Palomar_Beta_Prototype/Software/harrington-test-code/main C:/Users/zwhar/esp/esp-idf/components/mbedtls C:/Users/zwhar/esp/esp-idf/components/mqtt C:/Users/zwhar/esp/esp-idf/components/newlib C:/Users/zwhar/esp/esp-idf/components/nvs_flash C:/Users/zwhar/esp/esp-idf/components/openthread C:/Users/zwhar/esp/esp-idf/components/partition_table C:/Users/zwhar/esp/esp-idf/components/perfmon C:/Users/zwhar/esp/esp-idf/components/protobuf-c C:/Users/zwhar/esp/esp-idf/components/protocomm C:/Users/zwhar/esp/esp-idf/components/pthread C:/Users/zwhar/esp/esp-idf/components/sdmmc C:/Users/zwhar/esp/esp-idf/components/soc C:/Users/zwhar/esp/esp-idf/components/spi_flash C:/Users/zwhar/esp/esp-idf/components/spiffs C:/Users/zwhar/esp/esp-idf/components/tcp_transport C:/Users/zwhar/esp/esp-idf/components/ulp C:/Users/zwhar/esp/esp-idf/components/unity C:/Users/zwhar/esp/esp-idf/components/usb C:/Users/zwhar/esp/esp-idf/components/vfs C:/Users/zwhar/esp/esp-idf/components/wear_levelling C:/Users/zwhar/esp/esp-idf/components/wifi_provisioning C:/Users/zwhar/esp/esp-idf/components/wpa_supplicant C:/Users/zwhar/esp/esp-idf/components/xtensa
+-- Configuring done
+-- Generating done
+-- Build files have been written to: C:/git/EE416_Palomar_Beta_Prototype/Software/harrington-test-code/build
