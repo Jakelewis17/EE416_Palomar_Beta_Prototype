@@ -294,15 +294,4 @@ void ecg_measurement()
 
 void calculateBPM () 
 {  
-  int beat_new = millis();    // get the current millisecond
-  int diff = beat_new - beat_old;    // find the time between the last two beats
-  float currentBPM = 60000 / diff;    // convert to beats per minute
-  beats[beatIndex] = currentBPM;  // store to array to convert the average
-  float total = 0.0;
-  for (int i = 0; i < 15; i++){
-    total += beats[i];
-  }
-  BPM = int(total / 15);
-  beat_old = beat_new;
-  beatIndex = (beatIndex + 1) % 15;  // cycle through the array instead of using FIFO queue
-  }
+  int beat_new = millis();
