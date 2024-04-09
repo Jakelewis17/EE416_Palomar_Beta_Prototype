@@ -52,8 +52,8 @@ void ECG_timer()
   //Blynk.virtualWrite(V53, ecg_reading);  
   //Blynk.virtualWrite(V53, ecg_buffer[ecg_index]);
   Blynk.virtualWrite(V53, Patientdata.ECG[ECG_index]);
-  Serial.println("In ECG_Timer");
-  Serial.println(Patientdata.ECG[ECG_index]);
+  //Serial.println("In ECG_Timer");
+  //Serial.println(Patientdata.ECG[ECG_index]);
   ECG_index++; 
 }
 
@@ -69,17 +69,41 @@ void read_ecg()
 
   //ecg_measurement();
   byte x = 1;
+  //byte RxByte;
+  int RxByte;
 
   //send flag to slave to start ECG measurement
-  Wire.begin();
+  Wire.begin(slaveSDA, slaveSCL);
   Serial.println("Before Transmission");
-  Wire.beginTransmission(127);
+  //Wire.beginTransmission(127);
   Serial.println("Before write");
-  Wire.write(x); // 1 indicates ECG measurement
-  Wire.endTransmission();   
+  //Wire.write(x); // 1 indicates ECG measurement
+  for(int i = 0; i < 10; i++)
+  {
+    Wire.beginTransmission(127);
+    Wire.write(x); // 1 indicates ECG measurement
+    Wire.endTransmission();  
+    x++;
+  }
+
+  //Wire.endTransmission();   
   Serial.println("Before receive");
   Wire.onReceive(ECGreceiveEvent);
   Serial.println("After receive");
+  while(ECG_index < 1000)
+  {
+    Wire.requestFrom(127, 3);
+    while(Wire.available())
+    {
+      RxByte = Wire.read();
+    }
+
+    Patientdata.ECG[ECG_index] = (int)RxByte; //store data into array
+    Serial.println((int)RxByte);        
+    ECG_index++;
+  }
+
+
   while(ECG_index < 1000); //wait for enough data to accumulate
   ECG_index = 0; //reset index
 

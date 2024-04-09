@@ -80,10 +80,13 @@
 //   Serial.println(x);         // print the integer
 // }
 
-
+int i = 0;
+int temp_flag = 0;
+volatile int master_selection;
 patientdata Patientdata; // Global variable to store received data
 
 void setup() {
+  Serial.println("In setup");
   Wire.begin(SLAVE_ADDRESS);
   Wire.onReceive(receiveEvent);
   Serial.begin(115200);
@@ -91,6 +94,15 @@ void setup() {
 
 void loop() {
   // Slave does nothing in loop
+  
+  if(i = 0)
+  {
+    Serial.println("In slave loop");
+    Wire.begin(127);
+    Wire.onReceive(receiveEvent);
+    i++;
+  }
+  //Serial.println("In slave loop");
 }
 
 /*
@@ -128,13 +140,14 @@ void deserializePatientData(patientdata& data, const uint8_t* buffer) {
 void receiveEvent(int howMany)
 {
   Serial.println("In receive event");
-  int Master_selection = Wire.read();    // receive byte as an integer
+  master_selection = Wire.read();    // receive byte as an integer
+  Serial.println((int)master_selection);
 
-  if(Master_selection == 0) //receive patientdata and send to webserver
+  if(master_selection == 0) //receive patientdata and send to webserver
   {
     send_to_webserver();
   }
-  else if (Master_selection == 1) //Do ECG measurement and send data back 
+  else if (master_selection > 1) //Do ECG measurement and send data back 
   {
     ECG_Measurement();
   }
@@ -153,14 +166,20 @@ void ECG_Measurement()
   Serial.println("In ECG Measurement");
    //Zack ECG code here
 
-   //temp for testing
+  if(temp_flag == 0)
+  {
+  //temp for testing
    for(int i = 0; i < 1000; i++)
    {
     Wire.beginTransmission(SLAVE_ADDRESS); // transmit to device 127
     Patientdata.ECG[i] = i;
     Wire.write(Patientdata.ECG[i]);
     Wire.endTransmission();    // stop transmitting
-   }
+   }  
+
+   temp_flag = 1;
+  }
+   
 
   
 }
