@@ -50,7 +50,7 @@
 
 struct patientdata{
     int Spo2;
-    char BP[10];
+    char BP[6];
     int Heartrate;
     char date[50];
     int ECG[1000];
@@ -104,7 +104,4 @@ void displayBP(float pressure);
 
 void sendData();
 
-void ECGreceiveEvent(int howMany);
-
-
-#endif
+void ECG
