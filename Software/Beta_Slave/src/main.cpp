@@ -125,4 +125,121 @@ void receiveEvent(int howMany) {
     Serial.println(Patientdata.Heartrate);
     Serial.print("Received Date: ");
     Serial.println(Patientdata.date);
-    Serial.print
+    Serial.print("Received ECG: ");
+    for (int i = 0; i < 10; i++) {
+      Serial.println(Patientdata.ECG[i]);
+    }
+  }
+}
+*/
+
+void deserializePatientData(patientdata& data, const uint8_t* buffer) {
+    memcpy(&data, buffer, sizeof(patientdata));
+}
+
+void receiveEvent(int howMany)
+{
+  Serial.println("In receive event");
+  master_selection = Wire.read();    // receive byte as an integer
+  Serial.println((int)master_selection);
+
+  if(master_selection == 0) //receive patientdata and send to webserver
+  {
+    send_to_webserver();
+  }
+  else if (master_selection == 1) //Do ECG measurement and send data back 
+  {
+    ECG_Measurement();
+  }
+}
+
+
+
+void send_to_webserver()
+{
+  
+  int SpO2 = Wire.read();    // receive byte as an integer
+  Patientdata.Spo2 = SpO2;   //populate Patientdata data structure
+
+  int SpO2_valid = Wire.read();
+  Patientdata.SpO2_invalid = SpO2_valid;
+
+  for(int i = 0; i < 6; i++)
+  {
+    Patientdata.BP[i] = Wire.read();
+  }
+  int BP_valid = Wire.read();
+
+  int heartrate = Wire.read();
+  Patientdata.Heartrate = heartrate;
+
+  for(int i = 0; i < 50; i++)
+  {
+    Patientdata.date[i] = Wire.read();
+  }
+
+  for(int i = 0; i < 1000; i++)
+  {
+    Patientdata.ECG[i] = Wire.read();
+  }
+
+  int ECG_Valid = Wire.read();
+  Patientdata.ECG_invalid = ECG_Valid;
+
+  //get any extra data
+  while(Wire.available())
+  {
+    byte garbage = Wire.read();
+  }
+
+  //print for check
+  Serial.print("Spo2: ");
+  Serial.println(Patientdata.Spo2);
+  Serial.print("Spo2 Valid? ");
+  Serial.println(Patientdata.SpO2_invalid);
+  Serial.print("BP: ");
+  Serial.println(Patientdata.BP);
+  Serial.print("BP Valid? ");
+  Serial.println(Patientdata.BP_invalid);
+  Serial.print("HR: ");
+  Serial.println(Patientdata.Heartrate);
+  Serial.print("Date: ");
+  Serial.println(Patientdata.date);
+  Serial.print("ECG: ");
+  for(int i = 0; i < 1000; i++)
+  {
+    Serial.print(Patientdata.ECG[i]);
+  }
+  Serial.println(Patientdata.ECG_invalid);
+
+
+}
+
+
+void ECG_Measurement()
+{
+  Serial.println("In ECG Measurement");
+   //Zack ECG code here
+
+   byte TxByte = 0;
+
+  if(temp_flag == 0)
+  {
+  //temp for testing
+   for(int i = 0; i < 255; i++)
+   {
+    //Wire.beginTransmission(SLAVE_ADDRESS); // transmit to device 127
+    Patientdata.ECG[i] = i;
+    //Wire.write((byte)Patientdata.ECG[i]);
+    Wire.write("a");
+    Serial.print("Data: ");
+    Serial.println(Patientdata.ECG[i]);
+    //Wire.endTransmission();    // stop transmitting
+   }  
+
+   temp_flag = 1;
+  }
+   
+
+  
+}
