@@ -151,6 +151,7 @@ void receiveEvent(int howMany)
   {
     ECG_Measurement();
   }
+  
 }
 
 
@@ -168,23 +169,17 @@ void send_to_webserver()
   {
     Patientdata.BP[i] = Wire.read();
   }
+  Patientdata.BP[7] = '\0';
   int BP_valid = Wire.read();
+  Patientdata.BP_invalid = BP_valid;
 
-  int heartrate = Wire.read();
-  Patientdata.Heartrate = heartrate;
+  byte heartrate = Wire.read();
+  Patientdata.Heartrate = (int)heartrate;
 
-  for(int i = 0; i < 50; i++)
+  for(int i = 0; i < 7; i++)
   {
     Patientdata.date[i] = Wire.read();
   }
-
-  for(int i = 0; i < 1000; i++)
-  {
-    Patientdata.ECG[i] = Wire.read();
-  }
-
-  int ECG_Valid = Wire.read();
-  Patientdata.ECG_invalid = ECG_Valid;
 
   //get any extra data
   while(Wire.available())
@@ -208,9 +203,14 @@ void send_to_webserver()
   Serial.print("ECG: ");
   for(int i = 0; i < 1000; i++)
   {
-    Serial.print(Patientdata.ECG[i]);
+    Patientdata.ECG[i] = i;
+    Serial.println(Patientdata.ECG[i]);
   }
+  Serial.print("ECG valid: ");
   Serial.println(Patientdata.ECG_invalid);
+
+
+  //send data to webserver here
 
 
 }
@@ -240,6 +240,5 @@ void ECG_Measurement()
    temp_flag = 1;
   }
    
-
-  
 }
+
