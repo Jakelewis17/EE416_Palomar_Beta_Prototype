@@ -50,9 +50,9 @@
 
 struct patientdata{
     int Spo2;
-    char BP[10];
+    char BP[7];
     int Heartrate;
-    char date[50];
+    char date[8];
     int ECG[1000];
     int SpO2_invalid;
     int BP_invalid;

@@ -162,13 +162,20 @@ void loop() {
 void sendData()
 {
   //connect to slave ESP
-  Wire.begin();
+  Wire.begin(slaveSDA, slaveSCL);
 
   //get time
   time_t t = time(NULL);
   struct tm tm = *localtime(&t);
-  sprintf(Patientdata.date, "%d-%02d-%02d %02d:%02d:%02d\n", tm.tm_year + 1900, tm.tm_mon + 1, 
-  tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
+  sprintf(Patientdata.date, "%d-%02d", tm.tm_year + 1954, tm.tm_mon + 4);
+
+  //fake data
+  Patientdata.Spo2 = 98;
+  Patientdata.SpO2_invalid = 0;
+  strcpy(Patientdata.BP, "128/90\0");
+  Patientdata.BP_invalid = 1;
+  Patientdata.Heartrate = 135;
+  Patientdata.ECG_invalid = 69;
 
   //send data via I2C to other esp (print values for now)
   Serial.print("Spo2: ");
@@ -185,16 +192,29 @@ void sendData()
   Serial.println(Patientdata.date);
   Serial.print("ECG: ");
 
+  
+
+
   Wire.beginTransmission(127);
   Wire.write(0); // 0 indicates patient data is incoming
   Wire.write(Patientdata.Spo2);
   Wire.write(Patientdata.SpO2_invalid);
+  //for(int i = 0; i++; i < 10)
+  //{
+    //Wire.write(Patientdata.BP[i]);
+  //}
   Wire.write(Patientdata.BP);
   Wire.write(Patientdata.BP_invalid);
   Wire.write(Patientdata.Heartrate);
+  //for (int i = 0; i < 50; i++)
+  //{
+   // Wire.write(Patientdata.date[i]);
+  //}
   Wire.write(Patientdata.date);
-  //Wire.write(Patientdata.ECG);
-  Wire.endTransmission(true);
+
+  int check = Wire.endTransmission(); //endTransmission sends the queued data
+  Serial.print("End Transmission Code: ");
+  Serial.println(check);
 
   //reset all values back to 0
   Patientdata.Spo2 = 0;
@@ -211,3 +231,4 @@ void sendData()
     Patientdata.ECG[i] = 0;
   }
 }
+

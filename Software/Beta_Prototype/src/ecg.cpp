@@ -51,9 +51,10 @@ void ECG_timer()
   //Write to virtual pin 53 (ECG data)
   //Blynk.virtualWrite(V53, ecg_reading);  
   //Blynk.virtualWrite(V53, ecg_buffer[ecg_index]);
-  Blynk.virtualWrite(V53, Patientdata.ECG[ECG_index]);
-  Serial.println("In ECG_Timer");
-  Serial.println(Patientdata.ECG[ECG_index]);
+  Blynk.virtualWrite(V53, Patientdata.ECG[ECG_index]); //uncomment this
+  //Serial.println("In ECG_Timer");
+  //Serial.println(Patientdata.ECG[ECG_index]);
+
   ECG_index++; 
 }
 
@@ -61,25 +62,55 @@ void ECG_timer()
 void read_ecg()
 {
   what_press = 0;
-
+ 
   Blynk.virtualWrite(V56, "Measurement in Progress");  
   
   //set interval to update app every 10th of a second
-  timer.setInterval(100L, ECG_timer); 
+  timer.setInterval(1000L, ECG_timer); 
 
   //ecg_measurement();
   byte x = 1;
+  byte RxByte;
+  //int RxByte;
 
   //send flag to slave to start ECG measurement
-  Wire.begin();
+  Wire.begin(slaveSDA, slaveSCL);
   Serial.println("Before Transmission");
   Wire.beginTransmission(127);
   Serial.println("Before write");
   Wire.write(x); // 1 indicates ECG measurement
+  /*
+  for(int i = 0; i < 10; i++)
+  {
+    Wire.beginTransmission(127);
+    Wire.write(x); // 1 indicates ECG measurement
+    Wire.endTransmission();  
+    x++;
+  }
+  */
+  char test_char;
   Wire.endTransmission();   
   Serial.println("Before receive");
   Wire.onReceive(ECGreceiveEvent);
   Serial.println("After receive");
+  Wire.requestFrom(127, 255);
+  //while(ECG_index < 1000)
+  //{
+    
+    while(Wire.available())
+    {
+      //RxByte = Wire.read();
+      test_char = Wire.read();
+      Serial.println(test_char);   
+    }
+
+    //Patientdata.ECG[ECG_index] = (int)RxByte; //store data into array
+    //Serial.println((int)RxByte); 
+        
+    //ECG_index++;
+  //}
+
+
   while(ECG_index < 1000); //wait for enough data to accumulate
   ECG_index = 0; //reset index
 
@@ -107,7 +138,7 @@ void read_ecg()
 
 void ECGreceiveEvent(int howMany)
 {
-  
+  Serial.println("In ECG Receieve");
   while(0 < Wire.available()) // loop through all but the last
   {
     int ECG_data = Wire.read();    // receive byte as an integer
@@ -136,6 +167,7 @@ void ecg_measurement()
   int bin[20] = {0};
 
   int temp_reading[10] = {1500, 1400, 1500, 1200, 1100, 1900, 1300, 1500, 1500, 1500};
+  
   int temp_index = 0;
   
   starttime_ecg = millis();
