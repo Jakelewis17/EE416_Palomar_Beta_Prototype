@@ -1,7 +1,7 @@
 {
     "version":            "1",
     "project_name":       "harrington-test-code",
-    "project_version":    "1af32db",
+    "project_version":    "042011d-dirty",
     "project_path":       "C:/git/EE416_Palomar_Beta_Prototype/Software/harrington-test-code",
     "idf_path":           "C:/Users/zwhar/esp/esp-idf",
     "build_dir":          "C:/git/EE416_Palomar_Beta_Prototype/Software/harrington-test-code/build",

@@ -41,6 +41,16 @@ static void blink_led(void)
     gpio_set_level(BLINK_GPIO2, !s_led_state);
 }
 #else
+#define LENGTH 20
+double QRS_signal[LENGTH] = {2.19, 2.21, 2.22, 2.26, 2.29, 2.31, 2.33, 2.37, 2.38, 2.37, 
+                            2.31, 2.25, 2.17, 2.08, 2.03, 1.99, 1.97, 1.96, 1.94, 1.94};
+uint16_t data_in[LENGTH] = {0};
+uint16_t threshold = 4750;
+bool above_threshold = false;
+#define SAMPLES 5
+uint16_t beep_counter = SAMPLES;
+int64_t beep_times[SAMPLES] = {0};
+
 // Define the SPI bus configuration
 spi_bus_config_t bus_config = {
     .miso_io_num = 14, // MISO connected to GPIO14 (IO14)
@@ -107,7 +117,8 @@ void app_main(void)
 
         /* Toggle the LED state */
         s_led_state = !s_led_state;
-        vTaskDelay(CONFIG_BLINK_PERIOD*5 / portTICK_PERIOD_MS);
+        //vTaskDelay(CONFIG_BLINK_PERIOD*5 / portTICK_PERIOD_MS);
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
 #else
         // Read data from ADC121
         uint8_t adc_data[2];
@@ -120,11 +131,41 @@ void app_main(void)
         assert(ret == ESP_OK);
 
         //ESP_LOGI(TAG, "Raw ADC Data: %02X %02X", adc_data[0], adc_data[1]);
+        // Get Data
         uint16_t raw_value = (adc_data[0] << 8) | adc_data[1];
-        printf("%u\n", raw_value);
+        for (int i = 0; i < LENGTH-1; i++) {
+            data_in[i] = data_in[i+1];
+        }
+        data_in[LENGTH-1] = raw_value;
+        
+        // Cross Correlation
+        double sum = 0;
+        for (int i = 0; i < LENGTH; i++) {
+            sum += data_in[i] * QRS_signal[i];
+        }
+        uint16_t coorelated_value = (uint16_t)(sum/LENGTH);
+        
+        // Calculate Heartbeat
+        if (above_threshold && coorelated_value < threshold) {
+            above_threshold = false;
+        } else if (!above_threshold && coorelated_value > threshold) {
+            above_threshold = true;
+            printf("beep ");
 
-        // Process the ADC data (convert to voltage, etc.)
-        // ...
+            for (int i = 0; i < SAMPLES-1; i++) {
+                beep_times[i] = beep_times[i+1];
+            }
+            beep_times[SAMPLES-1] = esp_timer_get_time();
+
+            double heartbeat = ((SAMPLES-1) / ((beep_times[SAMPLES-1] - beep_times[0]) / 1000000.0)) * 60;
+            printf("%f\n", heartbeat);
+        }
+        //counter++;
+        //if (counter > 5) {
+        //    counter = 0;
+            //printf("%d\n", coorelated_value);
+            //printf("%d\n", raw_value);
+        //}
 
         vTaskDelay(10 / portTICK_PERIOD_MS);
 #endif
