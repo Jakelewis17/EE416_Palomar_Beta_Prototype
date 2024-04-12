@@ -1,6 +1,6 @@
 The following is the only code that matters out of the main.c file for ECG
 
-
+```
 // Some of the includes may not be needed as this is in ESP-IDF
 #include <stdio.h>
 #include "freertos/FreeRTOS.h"
@@ -103,3 +103,4 @@ void app_main(void)
         }
     }
 }
+```
