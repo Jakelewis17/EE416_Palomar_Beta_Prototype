@@ -1,77 +1,106 @@
-| Supported Targets | ESP32 | ESP32-C2 | ESP32-C3 | ESP32-C6 | ESP32-H2 | ESP32-S2 | ESP32-S3 |
-| ----------------- | ----- | -------- | -------- | -------- | -------- | -------- | -------- |
+The following is the only code that matters out of the main.c file for ECG
 
-# Blink Example
-
-(See the README.md file in the upper level 'examples' directory for more information about examples.)
-
-This example demonstrates how to blink a LED using GPIO or using the [led_strip](https://components.espressif.com/component/espressif/led_strip) component for the addressable LED, i.e. [WS2812](https://cdn-shop.adafruit.com/datasheets/WS2812B.pdf).
-
-The `led_strip` is installed via [component manager](main/idf_component.yml).
-
-## How to Use Example
-
-Before project configuration and build, be sure to set the correct chip target using `idf.py set-target <chip_name>`.
-
-### Hardware Required
-
-* A development board with Espressif SoC (e.g., ESP32-DevKitC, ESP-WROVER-KIT, etc.)
-* A USB cable for Power supply and programming
-
-Some development boards use an addressable LED instead of a regular one. These development boards include:
-
-| Board                | LED type             | Pin                  |
-| -------------------- | -------------------- | -------------------- |
-| ESP32-C3-DevKitC-1   | Addressable          | GPIO8                |
-| ESP32-C3-DevKitM-1   | Addressable          | GPIO8                |
-| ESP32-S2-DevKitM-1   | Addressable          | GPIO18               |
-| ESP32-S2-Saola-1     | Addressable          | GPIO18               |
-| ESP32-S3-DevKitC-1   | Addressable          | GPIO48               |
-
-See [Development Boards](https://www.espressif.com/en/products/devkits) for more information about it.
-
-### Configure the Project
-
-Open the project configuration menu (`idf.py menuconfig`).
-
-In the `Example Configuration` menu:
-
-* Select the LED type in the `Blink LED type` option.
-  * Use `GPIO` for regular LED blink.
-* Set the GPIO number used for the signal in the `Blink GPIO number` option.
-* Set the blinking period in the `Blink period in ms` option.
-
-### Build and Flash
-
-Run `idf.py -p PORT flash monitor` to build, flash and monitor the project.
-
-(To exit the serial monitor, type ``Ctrl-]``.)
-
-See the [Getting Started Guide](https://docs.espressif.com/projects/esp-idf/en/latest/get-started/index.html) for full steps to configure and use ESP-IDF to build projects.
-
-## Example Output
-
-As you run the example, you will see the LED blinking, according to the previously defined period. For the addressable LED, you can also change the LED color by setting the `led_strip_set_pixel(led_strip, 0, 16, 16, 16);` (LED Strip, Pixel Number, Red, Green, Blue) with values from 0 to 255 in the [source file](main/blink_example_main.c).
-
-```text
-I (315) example: Example configured to blink addressable LED!
-I (325) example: Turning the LED OFF!
-I (1325) example: Turning the LED ON!
-I (2325) example: Turning the LED OFF!
-I (3325) example: Turning the LED ON!
-I (4325) example: Turning the LED OFF!
-I (5325) example: Turning the LED ON!
-I (6325) example: Turning the LED OFF!
-I (7325) example: Turning the LED ON!
-I (8325) example: Turning the LED OFF!
 ```
+// Some of the includes may not be needed as this is in ESP-IDF
+#include <stdio.h>
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "driver/gpio.h"
+#include "esp_log.h"
+#include "led_strip.h"
+#include "sdkconfig.h"
 
-Note: The color order could be different according to the LED model.
+#include <driver/spi_master.h>
+#include "esp_timer.h"
 
-The pixel number indicates the pixel position in the LED strip. For a single LED, use 0.
+#define LENGTH 20
+double QRS_signal[LENGTH] = {2.19, 2.21, 2.22, 2.26, 2.29, 2.31, 2.33, 2.37, 2.38, 2.37, 
+                            2.31, 2.25, 2.17, 2.08, 2.03, 1.99, 1.97, 1.96, 1.94, 1.94};
+uint16_t data_in[LENGTH] = {0};
+uint16_t threshold = 4750;
+bool above_threshold = false;
+#define SAMPLES 5
+uint16_t beep_counter = SAMPLES;
+int64_t beep_times[SAMPLES] = {0};
 
-## Troubleshooting
+// Define the SPI bus configuration
+spi_bus_config_t bus_config = {
+    .miso_io_num = 14, // MISO connected to GPIO14 (IO14)
+    .mosi_io_num = -1, // Not used for ADC121
+    .sclk_io_num = 13, // SCLK connected to GPIO13 (IO13)
+    .quadwp_io_num = -1,
+    .quadhd_io_num = -1,
+    .max_transfer_sz = 0,
+};
 
-* If the LED isn't blinking, check the GPIO or the LED type selection in the `Example Configuration` menu.
+// Define the SPI device configuration
+spi_device_interface_config_t dev_config = {
+    .mode = 0, // SPI mode 0 (CPOL=0, CPHA=0)
+    .clock_speed_hz = 1000000, // Set your desired clock speed (1MHz min for ADC121)
+    .spics_io_num = 12, // CS connected to GPIO12 (IO12)
+    .queue_size = 1,
+};
 
-For any technical queries, please open an [issue](https://github.com/espressif/esp-idf/issues) on GitHub. We will get back to you soon.
+
+
+void app_main(void)
+{
+    esp_err_t ret;
+
+    // Initialize the SPI bus
+    ret = spi_bus_initialize(VSPI_HOST, &bus_config, 1);
+    assert(ret == ESP_OK);
+
+    // Add the SPI device
+    spi_device_handle_t spi;
+    ret = spi_bus_add_device(VSPI_HOST, &dev_config, &spi);
+    assert(ret == ESP_OK);
+
+    // Clean up - never really occurs
+    //spi_bus_remove_device(spi);
+    //spi_bus_free(VSPI_HOST);
+
+
+    while (1) {
+        // Read data from ADC121
+        uint8_t adc_data[2];
+        spi_transaction_t trans = {
+            .length = 16, // 12-bit ADC, so 16 bits
+            .tx_buffer = NULL,
+            .rx_buffer = adc_data,
+        };
+        ret = spi_device_transmit(spi, &trans);
+        assert(ret == ESP_OK);
+
+        // Get Data
+        uint16_t raw_value = (adc_data[0] << 8) | adc_data[1];
+        for (int i = 0; i < LENGTH-1; i++) {
+            data_in[i] = data_in[i+1];
+        }
+        data_in[LENGTH-1] = raw_value;
+        
+        // Cross Correlation
+        double sum = 0;
+        for (int i = 0; i < LENGTH; i++) {
+            sum += data_in[i] * QRS_signal[i];
+        }
+        uint16_t coorelated_value = (uint16_t)(sum/LENGTH);
+        
+        // Calculate Heartbeat
+        if (above_threshold && coorelated_value < threshold) {
+            above_threshold = false;
+        } else if (!above_threshold && coorelated_value > threshold) {
+            above_threshold = true;
+            printf("beep ");
+
+            for (int i = 0; i < SAMPLES-1; i++) {
+                beep_times[i] = beep_times[i+1];
+            }
+            beep_times[SAMPLES-1] = esp_timer_get_time();
+
+            double heartbeat = ((SAMPLES-1) / ((beep_times[SAMPLES-1] - beep_times[0]) / 1000000.0)) * 60;
+            printf("%f\n", heartbeat);
+        }
+    }
+}
+```
