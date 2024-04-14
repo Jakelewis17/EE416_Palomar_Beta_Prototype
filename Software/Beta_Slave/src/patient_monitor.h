@@ -34,6 +34,24 @@
 //#include "spo2_algorithm.h"
 #include <WiFi.h>
 #include <WiFiClient.h>
+#include <WebServer.h>
+
+// web server pages
+#include "index.h"
+#include "subject1.h"
+
+#include "error_404.h"
+#include "error_405.h"
+
+//define pages
+#define INDEX_PAGE 0
+#define SUBJECT1_PAGE 1
+
+//define error pages
+#define ERROR_404_PAGE -1
+#define ERROR_405_PAGE -2
+
+
 //#include <BlynkSimpleEsp32.h>
 //#include <SparkFun_Bio_Sensor_Hub_Library.h>
 
