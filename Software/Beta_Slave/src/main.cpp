@@ -43,6 +43,32 @@ const char* password = "*69048uB";
 // Set web server port number to 80
 WiFiServer server(80);
 
+// ECG variables
+double ECG_QRS_signal[ECG_CORRELATION_LENGTH] = {2.19, 2.21, 2.22, 2.26, 2.29, 2.31, 2.33, 2.37, 2.38, 2.37, 
+                                            2.31, 2.25, 2.17, 2.08, 2.03, 1.99, 1.97, 1.96, 1.94, 1.94};
+uint16_t ECG_correlation_data[ECG_CORRELATION_LENGTH] = {0};
+uint16_t ECG_beat_threshold = 4750;
+bool ECG_above_beat_threshold = false;
+int64_t ECG_beat_times[ECG_HEARTRATE_SAMPLES] = {0};
+
+// Define the SPI bus configuration
+spi_bus_config_t bus_config = {
+    .miso_io_num = 14,  // MISO connected to GPIO14 (IO14)
+    .mosi_io_num = -1,  // Not used for ADC121
+    .sclk_io_num = 13,  // SCLK connected to GPIO13 (IO13)
+    .quadwp_io_num = -1,
+    .quadhd_io_num = -1,
+    .max_transfer_sz = 0,
+};
+
+// Define the SPI device configuration
+spi_device_interface_config_t dev_config = {
+    .mode = 0,                  // SPI mode 0
+    .clock_speed_hz = 1000000,  // 1MHz min for ADC121
+    .spics_io_num = 12,         // CS connected to GPIO12 (IO12)
+    .queue_size = 1,
+};
+
 void setup() {
   Serial.println("In setup");
   Wire.begin(SLAVE_ADDRESS);
@@ -65,6 +91,9 @@ void setup() {
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());
   server.begin();
+
+  // Initialize ECG SPI interface
+  init_ECG();
 }
 
 void loop() {
@@ -318,12 +347,73 @@ void generate_id_number(){
   }
 }
 
+void init_ECG()
+{
+  esp_err_t ret;
+
+  // Initialize the SPI bus
+  ret = spi_bus_initialize(VSPI_HOST, &bus_config, 1);
+  assert(ret == ESP_OK);
+
+  // Add the SPI device
+  spi_device_handle_t spi;
+  ret = spi_bus_add_device(VSPI_HOST, &dev_config, &spi);
+  assert(ret == ESP_OK);
+}
+
 void ECG_Measurement()
 {
   Serial.println("In ECG Measurement");
-   //Zack ECG code here
 
-   byte TxByte = 0;
+  for (int index = 0; index < ECG_SAMPLES; index++)
+  {
+    // Read data from ADC121
+    uint8_t adc_data[2];
+    spi_transaction_t trans = {
+        .length = 16, // 12-bit ADC, so 16 bits
+        .tx_buffer = NULL,
+        .rx_buffer = adc_data,
+    };
+    esp_err_t ret = spi_device_transmit(spi, &trans);
+    assert(ret == ESP_OK);
+
+    // Convert data to integer
+    uint16_t raw_value = (adc_data[0] << 8) | adc_data[1];
+
+    // Add data to arrays
+    Patientdata.ECG[index] = raw_value;
+    for (int i = 0; i < ECG_CORRELATION_LENGTH-1; i++) {
+        ECG_correlation_data[i] = ECG_correlation_data[i+1];
+    }
+    ECG_correlation_data[ECG_CORRELATION_LENGTH-1] = raw_value;
+    
+    // *** Add code to update webserver/app ***
+
+
+    // Cross Correlation
+    double sum = 0;
+    for (int i = 0; i < ECG_CORRELATION_LENGTH; i++) {
+        sum += ECG_correlation_data[i] * ECG_QRS_signal[i];
+    }
+    uint16_t coorelated_value = (uint16_t)(sum/ECG_CORRELATION_LENGTH);
+    
+    // Calculate Heartbeat
+    if (ECG_above_beat_threshold && coorelated_value < ECG_beat_threshold) {
+        ECG_above_beat_threshold = false;
+    } else if (!ECG_above_beat_threshold && coorelated_value > ECG_beat_threshold) {
+        ECG_above_beat_threshold = true;
+
+        for (int i = 0; i < ECG_HEARTRATE_SAMPLES-1; i++) {
+            ECG_beat_times[i] = ECG_beat_times[i+1];
+        }
+        ECG_beat_times[ECG_HEARTRATE_SAMPLES-1] = esp_timer_get_time();
+
+        double heartbeat = ((ECG_HEARTRATE_SAMPLES-1) / ((ECG_beat_times[ECG_HEARTRATE_SAMPLES-1] - ECG_beat_times[0]) / 1000000.0)) * 60;
+    }
+    delay(10);
+  }
+
+  byte TxByte = 0;
 
   if(temp_flag == 0)
   {

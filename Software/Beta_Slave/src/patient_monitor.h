@@ -29,6 +29,8 @@
 #include <WiFi.h>
 #include <WiFiClient.h>
 #include <WebServer.h>
+#include <driver/spi_master.h>
+#include "esp_timer.h"
 
 // web server pages
 #include "index.h"
@@ -46,12 +48,17 @@
 
 #define SLAVE_ADDRESS 127
 
+//define ECG resolution
+#define ECG_SAMPLES = 1000
+#define ECG_CORRELATION_LENGTH 20
+#define ECG_HEARTRATE_SAMPLES 5
+
 struct patientdata{
     int Spo2;
     char BP[7];
     int Heartrate;
     char date[8];
-    int ECG[1000];
+    int ECG[ECG_SAMPLES];
     int SpO2_invalid;
     int BP_invalid;
     int ECG_invalid;
@@ -64,6 +71,7 @@ void connectserver();
 void receiveData();
 void receiveEvent(int howMany);
 void sendDataToSlave(patientdata* data);
+void init_ECG();
 void ECG_Measurement();
 void send_to_webserver();
 
