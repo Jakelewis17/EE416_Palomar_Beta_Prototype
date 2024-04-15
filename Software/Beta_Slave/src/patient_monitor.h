@@ -49,7 +49,7 @@
 #define SLAVE_ADDRESS 127
 
 //define ECG resolution
-#define ECG_SAMPLES = 1000
+#define ECG_SAMPLES 1000
 #define ECG_CORRELATION_LENGTH 20
 #define ECG_HEARTRATE_SAMPLES 5
 

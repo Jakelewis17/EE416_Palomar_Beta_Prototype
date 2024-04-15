@@ -54,7 +54,7 @@ int64_t ECG_beat_times[ECG_HEARTRATE_SAMPLES] = {0};
 // Define the SPI bus configuration
 spi_bus_config_t bus_config = {
     .miso_io_num = 14,  // MISO connected to GPIO14 (IO14)
-    .mosi_io_num = -1,  // Not used for ADC121
+    //.mosi_io_num = -1,  // Not used for ADC121
     .sclk_io_num = 13,  // SCLK connected to GPIO13 (IO13)
     .quadwp_io_num = -1,
     .quadhd_io_num = -1,
@@ -68,6 +68,8 @@ spi_device_interface_config_t dev_config = {
     .spics_io_num = 12,         // CS connected to GPIO12 (IO12)
     .queue_size = 1,
 };
+
+spi_device_handle_t spi;
 
 void setup() {
   Serial.println("In setup");
@@ -356,7 +358,7 @@ void init_ECG()
   assert(ret == ESP_OK);
 
   // Add the SPI device
-  spi_device_handle_t spi;
+  
   ret = spi_bus_add_device(VSPI_HOST, &dev_config, &spi);
   assert(ret == ESP_OK);
 }
@@ -388,7 +390,7 @@ void ECG_Measurement()
     ECG_correlation_data[ECG_CORRELATION_LENGTH-1] = raw_value;
     
     // *** Add code to update webserver/app ***
-
+    Serial.println(raw_value);
 
     // Cross Correlation
     double sum = 0;
@@ -409,28 +411,30 @@ void ECG_Measurement()
         ECG_beat_times[ECG_HEARTRATE_SAMPLES-1] = esp_timer_get_time();
 
         double heartbeat = ((ECG_HEARTRATE_SAMPLES-1) / ((ECG_beat_times[ECG_HEARTRATE_SAMPLES-1] - ECG_beat_times[0]) / 1000000.0)) * 60;
+        Patientdata.Heartrate = heartbeat;
+        Serial.println(Patientdata.Heartrate);
     }
     delay(10);
   }
 
-  byte TxByte = 0;
+  // byte TxByte = 0;
 
-  if(temp_flag == 0)
-  {
-  //temp for testing
-   for(int i = 0; i < 255; i++)
-   {
-    //Wire.beginTransmission(SLAVE_ADDRESS); // transmit to device 127
-    Patientdata.ECG[i] = i;
-    //Wire.write((byte)Patientdata.ECG[i]);
-    Wire.write("a");
-    Serial.print("Data: ");
-    Serial.println(Patientdata.ECG[i]);
-    //Wire.endTransmission();    // stop transmitting
-   }  
+  // if(temp_flag == 0)
+  // {
+  // //temp for testing
+  //  for(int i = 0; i < 255; i++)
+  //  {
+  //   //Wire.beginTransmission(SLAVE_ADDRESS); // transmit to device 127
+  //   Patientdata.ECG[i] = i;
+  //   //Wire.write((byte)Patientdata.ECG[i]);
+  //   Wire.write("a");
+  //   Serial.print("Data: ");
+  //   Serial.println(Patientdata.ECG[i]);
+  //   //Wire.endTransmission();    // stop transmitting
+  //  }  
 
-   temp_flag = 1;
-  }
+  //  temp_flag = 1;
+  // }
    
 }
 
