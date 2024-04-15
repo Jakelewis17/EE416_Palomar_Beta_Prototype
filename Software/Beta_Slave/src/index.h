@@ -1,3 +1,21 @@
+/*******************************************************************************
+ * Programmers: Jake Lewis, Zachary Harrington, Nicholas Gerth, Matthew Stavig *                                                      
+ * Class: EE415 - Product Design Management                                    *
+ * Sponsoring Company: Philips                                                 *
+ * Industry Mentor: Scott Schweizer                                            *
+ * Faculty Mentor: Mohammad Torabi Konjin                                      *
+ *                                                                             *
+ *                          Patient Monitor Project                            *
+ *                                                                             *
+ * Date: 4/15/2024                                                             *
+ * File: index.h                                                               *
+ *                                                                             *
+ * Description: A patient monitor measuring the three most important           *
+ *              physilogical parameters: blood oxygen, ECG, and blood pressure *   
+ *                                                                             *
+ *                                                                             *
+ ******************************************************************************/
+
 const char *HTML_CONTENT_HOME = R""""(
 <!DOCTYPE html>
 <html lang="en">
@@ -100,10 +118,6 @@ const char *HTML_CONTENT_HOME = R""""(
         <h2>Patient Information</h2>
         <ul>
           <li><a href="./subject1.html">Subject1 Page</a></li>
-          <!--
-          <li><a href="/spo2">SpO2 Page</a></li>
-          <li><a href="/blood_pressure"> Page</a></li>
-          -->
   
       </ul>
 

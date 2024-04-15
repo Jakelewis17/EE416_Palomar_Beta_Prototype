@@ -1,5 +1,35 @@
+/*******************************************************************************
+ * Programmers: Jake Lewis, Zachary Harrington, Nicholas Gerth, Matthew Stavig *                                                      
+ * Class: EE415 - Product Design Management                                    *
+ * Sponsoring Company: Philips                                                 *
+ * Industry Mentor: Scott Schweizer                                            *
+ * Faculty Mentor: Mohammad Torabi Konjin                                      *
+ *                                                                             *
+ *                          Patient Monitor Project                            *
+ *                                                                             *
+ * Date: 4/15/2024                                                             *
+ * File: main.cpp                                                              *
+ *                                                                             *
+ * Description: A patient monitor measuring the three most important           *
+ *              physilogical parameters: blood oxygen, ECG, and blood pressure *   
+ *                                                                             *
+ *                                                                             *
+ ******************************************************************************/
+
 #include <patient_monitor.h>
 
+// Variables to store received data from ESP32
+String patientID = "";
+String patientName = "";
+String patientAge = "";
+String patientSex = "";
+String timestamp = "";
+String bloodPressure = "";
+String heartRate = "";
+String spO2 = "";
+
+// Flag to indicate if ESP32 has sent data
+bool dataReceived = false;
 
 int i = 0;
 int temp_flag = 0;
@@ -40,14 +70,36 @@ void setup() {
 void loop() {
   // Slave does nothing in loop
   
-  if(i = 0)
+  // if(i = 0)
+  // {
+  //   Serial.println("In slave loop");
+  //   Wire.begin(127);
+  //   Wire.onReceive(receiveEvent);
+  //   i++;
+  // }
+  
+  // connect to web server
+  connectserver();
+}
+
+void receiveEvent(int howMany)
+{
+  Serial.println("In receive event");
+  master_selection = Wire.read();    // receive byte as an integer
+  Serial.println((int)master_selection);
+
+  if(master_selection == 0) //receive patientdata and send to webserver
   {
-    Serial.println("In slave loop");
-    Wire.begin(127);
-    Wire.onReceive(receiveEvent);
-    i++;
+    send_to_webserver();
   }
-  //Serial.println("In slave loop");
+  else if (master_selection == 1) //Do ECG measurement and send data back 
+  {
+    ECG_Measurement();
+  }
+  
+}
+
+void connectserver(){
   WiFiClient client = server.available();   // Listen for incoming clients
 
   if (client) {                             // If a new client connects,
@@ -123,7 +175,16 @@ void loop() {
         break;
       case SUBJECT1_PAGE:
         //client.println("This is the Subject1 page");
+        // Update HTML content with received variables
         html = String(HTML_CONTENT_SUBJECT1);
+        html.replace("$patientID", patientID);
+        html.replace("$patientName", patientName);
+        html.replace("$patientAge", patientAge);
+        html.replace("$patientSex", patientSex);
+        html.replace("$timestamp", timestamp);
+        html.replace("$bloodPressure", bloodPressure);
+        html.replace("$heartRate", heartRate);
+        html.replace("$spO2", spO2);
         break;
       case ERROR_404_PAGE:
         //client.println("Page Not Found");
@@ -147,29 +208,6 @@ void loop() {
     Serial.println("");
   }
 }
-
-void deserializePatientData(patientdata& data, const uint8_t* buffer) {
-    memcpy(&data, buffer, sizeof(patientdata));
-}
-
-void receiveEvent(int howMany)
-{
-  Serial.println("In receive event");
-  master_selection = Wire.read();    // receive byte as an integer
-  Serial.println((int)master_selection);
-
-  if(master_selection == 0) //receive patientdata and send to webserver
-  {
-    send_to_webserver();
-  }
-  else if (master_selection == 1) //Do ECG measurement and send data back 
-  {
-    ECG_Measurement();
-  }
-  
-}
-
-
 
 void send_to_webserver()
 {
@@ -216,6 +254,17 @@ void send_to_webserver()
   Serial.print("Date: ");
   Serial.println(Patientdata.date);
   Serial.print("ECG: ");
+
+  // Variables to send data from ESP32
+ patientName = Patientdata.name;
+ patientAge = random(100);
+ patientSex = "Male";
+
+timestamp = Patientdata.date;
+bloodPressure = Patientdata.BP;
+heartRate = Patientdata.Heartrate;
+spO2 = Patientdata.Spo2;
+
   for(int i = 0; i < 1000; i++)
   {
     Patientdata.ECG[i] = i;
@@ -226,10 +275,48 @@ void send_to_webserver()
 
 
   //send data to webserver here
-
+  dataReceived = true;
+  handleVariables();
 
 }
 
+void handleVariables() {
+  // Receive variables from ESP32
+  if (dataReceived) {
+    generate_id_number();
+    // Update HTML content with received variables
+    String html = String(HTML_CONTENT_SUBJECT1);
+    html.replace("$patientID", patientID);
+    html.replace("$patientName", patientName);
+    html.replace("$patientAge", patientAge);
+    html.replace("$patientSex", patientSex);
+    html.replace("$timestamp", timestamp);
+    html.replace("$bloodPressure", bloodPressure);
+    html.replace("$heartRate", heartRate);
+    html.replace("$spO2", spO2);
+    
+    // Print updated HTML to serial monitor
+    //Serial.println(html);
+    
+    dataReceived = false; // Reset flag
+  }
+}
+
+void generate_id_number(){
+  int random_id = random(10000); // Generate a random number between 0 and 9999
+
+  patientID = String(random_id);
+
+  if (random_id < 1000) {
+    patientID = "0" + patientID;  
+  }
+  if (random_id < 100) {
+    patientID = "0" + patientID;
+  }
+   if (random_id < 10) {
+    patientID = "0" + patientID;
+  }
+}
 
 void ECG_Measurement()
 {

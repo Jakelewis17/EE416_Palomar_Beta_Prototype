@@ -1,3 +1,20 @@
+/*******************************************************************************
+ * Programmers: Jake Lewis, Zachary Harrington, Nicholas Gerth, Matthew Stavig *                                                      
+ * Class: EE415 - Product Design Management                                    *
+ * Sponsoring Company: Philips                                                 *
+ * Industry Mentor: Scott Schweizer                                            *
+ * Faculty Mentor: Mohammad Torabi Konjin                                      *
+ *                                                                             *
+ *                          Patient Monitor Project                            *
+ *                                                                             *
+ * Date: 4/15/2024                                                             *
+ * File: error_405.h                                                           *
+ *                                                                             *
+ * Description: A patient monitor measuring the three most important           *
+ *              physilogical parameters: blood oxygen, ECG, and blood pressure *   
+ *                                                                             *
+ *                                                                             *
+ ******************************************************************************/
 
 const char *HTML_CONTENT_405 = R""""(
 <!DOCTYPE html>

@@ -1,5 +1,22 @@
+/*******************************************************************************
+ * Programmers: Jake Lewis, Zachary Harrington, Nicholas Gerth, Matthew Stavig *                                                      
+ * Class: EE415 - Product Design Management                                    *
+ * Sponsoring Company: Philips                                                 *
+ * Industry Mentor: Scott Schweizer                                            *
+ * Faculty Mentor: Mohammad Torabi Konjin                                      *
+ *                                                                             *
+ *                          Patient Monitor Project                            *
+ *                                                                             *
+ * Date: 4/15/2024                                                             *
+ * File: subject1.h                                                            *
+ *                                                                             *
+ * Description: A patient monitor measuring the three most important           *
+ *              physilogical parameters: blood oxygen, ECG, and blood pressure *   
+ *                                                                             *
+ *                                                                             *
+ ******************************************************************************/
+
 const char *HTML_CONTENT_SUBJECT1 = R""""(
-<!-- Used Chat GPT create website-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -122,15 +139,16 @@ const char *HTML_CONTENT_SUBJECT1 = R""""(
     </footer>
 
     <script>
+              
         // Define variables with values
-        var patientID = '000000';
-        var patientName = 'Sinclair Longbottom';
-        var patientAge = '35';
-        var patientSex = 'Male';
-        var timestamp = '2024-02-29 08:00:00';
-        var bloodPressure = '120/80';
-        var heartRate = '75';
-        var spO2 = '98';
+        var patientID = '$patientID';
+        var patientName = '$patientName';
+        var patientAge = '$patientAge';
+        var patientSex = '$patientSex';
+        var timestamp = '$timestamp';
+        var bloodPressure = '$bloodPressure';
+        var heartRate = '$heartRate';
+        var spO2 = '$spO2';
 
         // Update HTML content with variables
         document.getElementById('patientID').textContent = patientID;
@@ -145,3 +163,4 @@ const char *HTML_CONTENT_SUBJECT1 = R""""(
 </body>
 </html>
 )"""";
+
