@@ -390,7 +390,7 @@ void ECG_Measurement()
     ECG_correlation_data[ECG_CORRELATION_LENGTH-1] = raw_value;
     
     // *** Add code to update webserver/app ***
-    Serial.println(raw_value);
+    //Serial.println(raw_value);
 
     // Cross Correlation
     double sum = 0;
@@ -399,7 +399,7 @@ void ECG_Measurement()
     }
     uint16_t coorelated_value = (uint16_t)(sum/ECG_CORRELATION_LENGTH);
     
-    // Calculate Heartbeat
+    // Calculate Heartrate
     if (ECG_above_beat_threshold && coorelated_value < ECG_beat_threshold) {
         ECG_above_beat_threshold = false;
     } else if (!ECG_above_beat_threshold && coorelated_value > ECG_beat_threshold) {
@@ -410,8 +410,8 @@ void ECG_Measurement()
         }
         ECG_beat_times[ECG_HEARTRATE_SAMPLES-1] = esp_timer_get_time();
 
-        double heartbeat = ((ECG_HEARTRATE_SAMPLES-1) / ((ECG_beat_times[ECG_HEARTRATE_SAMPLES-1] - ECG_beat_times[0]) / 1000000.0)) * 60;
-        Patientdata.Heartrate = heartbeat;
+        double heartrate = ((ECG_HEARTRATE_SAMPLES-1) / ((ECG_beat_times[ECG_HEARTRATE_SAMPLES-1] - ECG_beat_times[0]) / 1000000.0)) * 60;
+        Patientdata.Heartrate = heartrate;
         Serial.println(Patientdata.Heartrate);
     }
     delay(10);
