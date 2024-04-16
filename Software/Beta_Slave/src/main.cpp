@@ -33,6 +33,8 @@ bool dataReceived = false;
 
 int i = 0;
 int temp_flag = 0;
+int request_array_index = 0;
+int_arr int_u;
 volatile int master_selection;
 patientdata Patientdata; // Global variable to store received data
 
@@ -75,6 +77,7 @@ void setup() {
   Serial.println("In setup");
   Wire.begin(SLAVE_ADDRESS);
   Wire.onReceive(receiveEvent);
+  Wire.onRequest(requestEvent);
   Serial.begin(115200);
 
   // Connect to Wi-Fi network with SSID and password
@@ -100,15 +103,7 @@ void setup() {
 
 void loop() {
   // Slave does nothing in loop
-  
-  // if(i = 0)
-  // {
-  //   Serial.println("In slave loop");
-  //   Wire.begin(127);
-  //   Wire.onReceive(receiveEvent);
-  //   i++;
-  // }
-  
+   
   // connect to web server
   connectserver();
 }
@@ -436,5 +431,25 @@ void ECG_Measurement()
   //  temp_flag = 1;
   // }
    
+}
+
+void requestEvent() {
+
+  //when master requests data
+
+  Serial.println("In Request event");
+
+  if(request_array_index > 1000) //check if all data transferred
+  {
+    int_u.intvalue = -1;
+    Wire.write(int_u.intbytes, 4);
+  }
+  
+  //send ECG data to master
+  int_u.intvalue = Patientdata.ECG[request_array_index];
+  Wire.write(int_u.intbytes, 4);
+  request_array_index++;
+
+
 }
 

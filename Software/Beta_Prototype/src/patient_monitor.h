@@ -48,18 +48,28 @@
 #define TIMER0_INTERVAL_MS        1000
 #define TIMER0_DURATION_MS        5000
 
+#define ECG_SAMPLES 1000
+
 struct patientdata{
     int Spo2;
     char BP[7];
     int Heartrate;
     char date[8];
-    int ECG[1000];
+    int ECG[ECG_SAMPLES];
     int SpO2_invalid;
     int BP_invalid;
     int ECG_invalid;
+    char name[15];
 };
 
 extern struct patientdata Patientdata;
+
+union int_arr
+{
+   byte    intbytes[sizeof(int)];
+   int     intvalue;   
+};
+
 
 //extern BlynkWifi Blynk;
 
@@ -103,8 +113,6 @@ void stopPump();
 void displayBP(float pressure);
 
 void sendData();
-
-void ECGreceiveEvent(int howMany);
 
 
 #endif

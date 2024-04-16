@@ -67,9 +67,16 @@ struct patientdata{
 
 extern struct patientdata Patientdata;
 
+union int_arr
+{
+   byte    intbytes[sizeof(int)];
+   int     intvalue;   
+};
+
 void connectserver();
 void receiveData();
 void receiveEvent(int howMany);
+void requestEvent();
 void sendDataToSlave(patientdata* data);
 void init_ECG();
 void ECG_Measurement();
