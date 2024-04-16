@@ -126,23 +126,18 @@ struct bloodData {
 };
 
 // Initialize functions for BP system
-void BPControlLoop();
+void init();
 void cycleBPSystem();
 
-void init();
-void looping();
-
+void findBPPoints(std::vector<bloodData> v, int windowSize, double s);
+double convertMVtommHG(double mv);
 void samplePressureSig(int s);
 double getPressure();
+
 void openValve();
 void closeValve();
 void pumpOn();
 void pumpOff();
-void pumpTest();
-
-void printVec(std::vector<bloodData> vec1);
-void findBPPoints(std::vector<bloodData> v, int windowSize, double s);
-double convertMVtommHG(double mv);
 
 
 // Create vectors from struct to process data
