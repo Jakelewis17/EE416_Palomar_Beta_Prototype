@@ -196,4 +196,67 @@ void spo2_measurment()
     if(spo2_control_value == 0) //terminate measurement
     {
       Blynk.virtualWrite(V51, 0); //reset ECG measurement button
-      Blynk.virtualWrite(V57, "Pre
+      Blynk.virtualWrite(V57, "Previous Measurement Was Invalid");
+      Patientdata.SpO2_invalid = 1; //set invalid flag
+      
+      break;
+    }
+   
+    endtime_spo2 = millis();
+  }
+
+  Blynk.virtualWrite(V51, 0); //reset spo2 measurement button
+  Blynk.virtualWrite(V57, "Measurement Complete, View Server for Details or Measure Again");  
+
+}
+
+/***********************************************************************************************************
+    Function: calculateSpO2()
+    Description: Updates SpO2 data array with data point and calculates the average of all data points
+    Parameters: The index of the SpO2 data array
+    Preconditions: Finger needs to be detected on Sparkfun board
+    Postconditions: SpO2 Data array and average updated
+************************************************************************************************************/
+void calculateSpO2(int index)
+{
+  int spo2_temp = 0, spo2_total = 0;
+
+  //update value in array
+  int spo2_array_val = index % 20;
+  spo2_data[spo2_array_val] = body.oxygen;
+
+  //calulate average
+  for(int i = 0; i < 20; i++)
+  {
+    spo2_temp = spo2_data[i];
+    spo2_total += spo2_temp;
+  }
+  Serial.println(avg_spo2);
+  avg_spo2 = spo2_total / 20;
+  Patientdata.Spo2 = avg_spo2;
+
+}
+
+/***********************************************************************************************************
+    Function: calculateHR()
+    Description: Updates HR data array with data point and calculates avg of all data points
+    Parameters: The index of the HR data array
+    Preconditions: Finger needs to be detected on Sparkfun board
+    Postconditions: HR data array and average updated 
+************************************************************************************************************/
+void calculateHR(int index)
+{
+  int HR_temp = 0, HR_total = 0;
+
+  int HR_array_val = index % 20;
+  HR_data[HR_array_val] = body.heartRate;
+
+  //calulate average
+  for(int i = 0; i < 20; i++)
+  {
+    HR_temp = HR_data[i];
+    HR_total += HR_temp;
+  }
+  avg_HR = HR_total / 20;
+  Patientdata.Heartrate = avg_HR;
+}
