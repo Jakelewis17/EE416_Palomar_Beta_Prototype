@@ -1,31 +1,33 @@
 /*******************************************************************************
  * Programmers: Jake Lewis, Zachary Harrington, Nicholas Gerth, Matthew Stavig *                                                      
- * Class: EE415 - Product Design Management                                    *
+ * Class: EE416 - Electrical Engineering Design                                *
  * Sponsoring Company: Philips                                                 *
  * Industry Mentor: Scott Schweizer                                            *
- * Faculty Mentor: Mohammad Torabi Konjin                                      *
+ * Faculty Mentor: Mohammad Torabi                                             *
  *                                                                             *
  *                          Patient Monitor Project                            *
  *                                                                             *
- * Date: 11/23/2023                                                            *
+ * Date: 5/8/2024                                                              *
  * File: spo2.cpp                                                              *
  *                                                                             *
- * Description: A patient monitor measuring the three most important           *
- *              physilogical parameters: blood oxygen, ECG, and blood pressure *   
+ * Description: Contains code to configure the SpO2 system, acquire data from  *
+ *              it, and send it to the app                                     *              
  *                                                                             *
  *                                                                             *
+ * Note: Got some code to set up the Sparkfun board from their website:        *
+ *       https://www.sparkfun.com/products/15219                               *               
  ******************************************************************************/
 
 #include "patient_monitor.h"
 
+/* external variables */
 extern int what_press;
 extern int spo2_control_value;
-
 extern patientdata Patientdata;
-
 extern BlynkWifi Blynk;
 extern BlynkTimer timer;
 
+/* global variables */
 int starttime_spo2 = 0, endtime_spo2 = 0;
 int spo2_data[20] = { 0 };
 int HR_data[20] = { 0 };
@@ -35,39 +37,54 @@ char result[10];
 
 // Takes address, reset pin, and MFIO pin.
 SparkFun_Bio_Sensor_Hub bioHub(resPin, mfioPin); 
-bioData body;  //This is a type (int, byte, long, etc.)
+bioData body;  
 
 void SpO2_timer() 
 {
-
+  //concatenate result into a string
   sprintf(result, "%i", avg_spo2);
 
   //Write to virtual pin 54 (SpO2 data)
   if(avg_spo2 < 85)
   {
+    //write ellipses if no data ready yet
     Blynk.virtualWrite(V54, "...");  
   }
   else
   {
+    //write correct data to app
     Blynk.virtualWrite(V54, result);  
   }
 }
 
+/***********************************************************************************************************
+    Function: read_spo2()
+    Description: Sets up Blynk timer and branches to spo2 measurement function
+    Preconditions: None
+    Postconditions: SpO2 Blynk timer set up
+************************************************************************************************************/
 void read_spo2()
 {
   what_press = 0;
 
-  timer.setInterval(1000L, SpO2_timer); 
+  timer.setInterval(1000L, SpO2_timer); //set up Blynk timer
   spo2_measurment();
 
 }
 
 
-
+/***********************************************************************************************************
+    Function: spo2_measurement()
+    Description: Configures Sparkfun SpO2 board, reads data for 30 secs, calculates SpO2 and HR every second,
+                 displays SpO2 reading on app, and stores data in Patientdata struct
+    Preconditions: Finger must be on Sparkfun board with constant pressure to get readings
+    Postconditions: Data viewable on Blynk app, Patientdata struct updated 
+************************************************************************************************************/
 void spo2_measurment()
 {
 
-  // Taken from SparkFun
+  /* The following chunk of code was taken from Sparkfun: https://www.sparkfun.com/products/15219 
+     This is configuring I2C to communicate with the sensor*/
   Wire.begin();
   int result = bioHub.begin();
   if (result == 0) // Zero errors!
@@ -108,8 +125,7 @@ void spo2_measurment()
   Serial.print("Pulse Width: ");
   Serial.println(pulseWidthVal);
 
-  // Set sample rate per second. Remember that not every sample rate is
-  // available with every pulse width. Check hookup guide for more information.  
+  // Set sample rate per second
   error = bioHub.setSampleRate(samples);
   if (!error){
       Serial.println("Sample Rate Set.");
@@ -126,8 +142,7 @@ void spo2_measurment()
   Serial.println(sampleVal); 
 
   // Data lags a bit behind the sensor, if your finger is on the sensor when
-  // it's being configured this delay will give some time for the data to catch
-  // up. 
+  // it's being configured this delay will give some time for the data to catch up
   Serial.println("Loading up the buffer with data....");
   
   delay(500);
@@ -138,15 +153,14 @@ void spo2_measurment()
   starttime_spo2 = millis();
   endtime_spo2 = starttime_spo2;
     
-    //Continuously taking samples from MAX30101.  Heart rate and SpO2 are calculated every 1 second
+    //Continuously taking samples from MAX30101.  Heart rate and SpO2 are calculated every 1 second. Run for 30 secs
     while((endtime_spo2 - starttime_spo2) <= 30000)
     {
       Blynk.virtualWrite(V57, "Measurement in Progress");  
       timer.run(); //run Blynk timers
 
       //some code taken from SparkFun
-      //Information from the readBpm function will be saved to our "body"
-      //variable.
+      //Information from the readBpm function will be saved to our "body" variable
       body = bioHub.readBpm();
       
       finger_detect = body.status; // 0 = no finger, 3 = finger detected;
@@ -167,8 +181,7 @@ void spo2_measurment()
       // with the flow of numbers
       delay(250);
 
-      //display_spo2(finger_detect);
-      if (finger_detect == 3) 
+      if (finger_detect == 3) //if finger detected
       {  
         calculateSpO2(spo2_index);
         calculateHR(spo2_index);  
@@ -178,71 +191,9 @@ void spo2_measurment()
         Blynk.virtualWrite(V57, "No Finger Detected"); 
       }
 
-      //check for long press to go back to menu
-      //rotary_sw.read();
-    if(what_press == 3)
-    {
-      //long press terminates the loop
-      what_press = 0;
-      //tft.fillScreen(TFT_WHITE);
-      break;
-    }
-
     //terminate measurement before done
     Blynk.run();
     if(spo2_control_value == 0) //terminate measurement
     {
-      //long press terminates the loop
-      what_press = 0;
-      //tft.fillScreen(TFT_WHITE);
       Blynk.virtualWrite(V51, 0); //reset ECG measurement button
-      Blynk.virtualWrite(V57, "Previous Measurement Was Invalid");
-      Patientdata.SpO2_invalid = 1; //set invalid flag
-      
-      break;
-    }
-   
-    endtime_spo2 = millis();
-  }
-
-  Blynk.virtualWrite(V51, 0); //reset spo2 measurement button
-  Blynk.virtualWrite(V57, "Measurement Complete, View Server for Details or Measure Again");  
-
-}
-
-void calculateSpO2(int index)
-{
-  int spo2_temp = 0, spo2_total = 0;
-
-  //update value in array
-  int spo2_array_val = index % 20;
-  spo2_data[spo2_array_val] = body.oxygen;
-
-  //calulate average
-  for(int i = 0; i < 20; i++)
-  {
-    spo2_temp = spo2_data[i];
-    spo2_total += spo2_temp;
-  }
-  Serial.println(avg_spo2);
-  avg_spo2 = spo2_total / 20;
-  Patientdata.Spo2 = avg_spo2;
-
-}
-
-void calculateHR(int index)
-{
-  int HR_temp = 0, HR_total = 0;
-
-  int HR_array_val = index % 20;
-  HR_data[HR_array_val] = body.heartRate;
-
-  //calulate average
-  for(int i = 0; i < 20; i++)
-  {
-    HR_temp = HR_data[i];
-    HR_total += HR_temp;
-  }
-  avg_HR = HR_total / 20;
-  Patientdata.Heartrate = avg_HR;
-}
+      Blynk.virtualWrite(V57, "Pre

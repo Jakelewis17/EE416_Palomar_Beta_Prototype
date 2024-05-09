@@ -1,17 +1,17 @@
 /*******************************************************************************
  * Programmers: Jake Lewis, Zachary Harrington, Nicholas Gerth, Matthew Stavig *                                                      
- * Class: EE415 - Product Design Management                                    *
+ * Class: EE416 - Electrical Engineering Design                                *
  * Sponsoring Company: Philips                                                 *
  * Industry Mentor: Scott Schweizer                                            *
- * Faculty Mentor: Mohammad Torabi Konjin                                      *
+ * Faculty Mentor: Mohammad Torabi                                             *
  *                                                                             *
  *                          Patient Monitor Project                            *
  *                                                                             *
- * Date: 11/23/2023                                                            *
+ * Date: 5/8/2024                                                              *
  * File: blood_pressure.cpp                                                    *
  *                                                                             *
- * Description: A patient monitor measuring the three most important           *
- *              physilogical parameters: blood oxygen, ECG, and blood pressure *   
+ * Description: Contains code to run the blood pressure system, interpret the  *
+ *              data, and send data back to the app                            *                       
  *                                                                             *
  *                                                                             *
  ******************************************************************************/
@@ -19,73 +19,47 @@
 
 #include "patient_monitor.h"
 
+/* Extern variables */
 extern int what_press;
-
 extern patientdata Patientdata;
-
-
-float pressureVolt = 100;
-
 extern BlynkWifi Blynk;
 extern BlynkTimer timer;
 
+/* Global Variables */
+float pressureVolt = 100;
 int starttime_bp = 0, endtime_bp = 0;
 extern int bp_control_value;
 char temp_bp_number[] = "120/80 ";
+int finalSystolic = 0;
+int finalDiastolic = 0;
 
+//Blynk Timer function
 void BP_timer() 
 {
-  Blynk.virtualWrite(V55, temp_bp_number);  
+  Blynk.virtualWrite(V55, Patientdata.BP); 
 }
 
+
+/***********************************************************************************************************
+    Function: read_bp()
+    Description: Sets up Blynk timer and branches to bp measurement function
+    Preconditions: None
+    Postconditions: BP Blynk timer set up
+************************************************************************************************************/
 void read_bp()
 {
-  what_press = 0;
-  
+  //setup timer and enter main loop
   timer.setInterval(1000L, BP_timer); 
-  for(int i = 0; i < 9; i++)
-  {
-    timer.run();
-    Blynk.virtualWrite(V58, "Measurement in Progress");  //ecg
-  }
+  app_main();
+
+  //Reset button and write message to app
   bp_control_value = 0;
   Blynk.virtualWrite(V52, bp_control_value);
   Blynk.virtualWrite(V58, "Measurement Complete, View Server for Details or Measure Again");  //ecg
   
 }
 
-void bp_measurement()
-{
 
-  digitalWrite(A1, LOW);
-  digitalWrite(A2, LOW);
-
-  // initialize valve as closed
-  digitalWrite(valveSwitch, LOW);
-  what_press = 0;
-
-  starttime_bp = millis();
-  endtime_bp = starttime_bp;
-  
-
-  cycleBPSystem();
-
-}
-
-
-
-
-
-
-
-
-// everything from here down is new
-
-
-
-
-
-#include "Arduino.h"
 #include <vector>
 #include <iostream>
 
@@ -116,29 +90,13 @@ double sigTime = 0.0;
 // Final systolic and diastolic values
 double systolicDbl = 0.0;
 double diastolicDbl = 0.0;
-int finalSystolic = 0;
-int finalDiastolic = 0;
+
 
 // Structure to hold voltage and timing
 struct bloodData {
   double voltage = 0.0;
   double time = 0.0;
 };
-
-// Initialize functions for BP system
-void init();
-void cycleBPSystem();
-
-void findBPPoints(std::vector<bloodData> v, int windowSize, double s);
-double convertMVtommHG(double mv);
-void samplePressureSig(int s);
-double getPressure();
-
-void openValve();
-void closeValve();
-void pumpOn();
-void pumpOff();
-
 
 // Create vectors from struct to process data
 bloodData data;
@@ -162,10 +120,14 @@ void app_main(void)
 	cycleBPSystem();
 }
 
-/* Setup Function*/
+/***********************************************************************************************************
+    Function: init()
+    Description: Initializes the pins and valve status
+    Preconditions: None
+    Postconditions: System is ready to get pressure
+************************************************************************************************************/
 void init() {
-  Serial.begin(115200);
-  while(!Serial){}
+ 
 
   // Initiate A1 and A2 for air pump
   pinMode(motor_A1, OUTPUT);
@@ -183,6 +145,14 @@ void init() {
 
 }
 
+
+/***********************************************************************************************************
+    Function: cycleBPSystem()
+    Description: THe main flow of operations: Sets up pump, inflates cuff, samples the pressure, opens the 
+                 valve, finds the blood pressure points, and converts them
+    Preconditions: None
+    Postconditions: BP points are found
+************************************************************************************************************/
 void cycleBPSystem()
 {
   // How long data is collected for after pump inflates
@@ -263,9 +233,20 @@ void cycleBPSystem()
   openValve();
   delay(10000);
   closeValve();
+
+  sprintf(Patientdata.BP, "%d", finalSystolic, "/", "%d", finalDiastolic);
+  timer.run();
+
 }
 
-// has vector input, finds the systolic and diastolic from that input
+/***********************************************************************************************************
+    Function: findBPPoints()
+    Description: Finds the systolic and diastolic blood pressure from an input vector
+    Parameters: The blood pressure data as a vector, the the window size for accuracy, and how long the 
+                reading took in seconds 
+    Preconditions: Data must have been sampled already to form a vector
+    Postconditions: The blood pressure is returned 
+************************************************************************************************************/
 void findBPPoints(std::vector<bloodData> v, int windowSize, double s)
 {
   // control variables
@@ -333,6 +314,13 @@ void findBPPoints(std::vector<bloodData> v, int windowSize, double s)
 
 }
 
+/***********************************************************************************************************
+    Function: convertMVtommHG()
+    Description: Converts the millivolt reading of the pressure into a mm of mercury reading
+    Parameters: The millivolt reading of the pressure
+    Preconditions: None
+    Postconditions: The reading is converted
+************************************************************************************************************/
 double convertMVtommHG(double mv)
 {
   double out = 0.0;
@@ -345,7 +333,13 @@ double convertMVtommHG(double mv)
   return out;
 }
 
-// sample the outcoming signal for s seconds
+/***********************************************************************************************************
+    Function: samplePressureSig()
+    Description: Samples the outgoing signal for a period of time
+    Parameters: The number of seconds the pressure will be sampled for 
+    Preconditions: Pump must be inflated enough to have a readable pressure
+    Postconditions: The pressure of the cuff in mV
+************************************************************************************************************/
 void samplePressureSig(int s)
 {
   // sets the pwm at 3800/4096 duty, gives time for signal to correct
@@ -370,7 +364,12 @@ void samplePressureSig(int s)
   }
 }
 
-// reads pressure from the pressure transducer pin
+/***********************************************************************************************************
+    Function: getPressure()
+    Description: Reads pressure from the pressure transducer pin
+    Preconditions: None
+    Postconditions: Pressure is read
+************************************************************************************************************/
 double getPressure()
 {
   // reads raw data from the ADC
@@ -384,26 +383,46 @@ double getPressure()
   return Vout;
 }
 
-// sets pwm to 0/4096 duty (open)
+/***********************************************************************************************************
+    Function: openValve()
+    Description: Sets the valve switch PWM to 0/4095 which is open
+    Preconditions: None
+    Postconditions: Valve is open
+************************************************************************************************************/
 void openValve()
 {
   ledcWrite(valveSwitch, 0);
 }
 
-// sets pwm to 4096/4096 duty (closed)
+/***********************************************************************************************************
+    Function: closeValve()
+    Description: Sets the valve switch PWM to 4096/4096 which is closed
+    Preconditions: None
+    Postconditions: Valve is closed
+************************************************************************************************************/
 void closeValve()
 {
   ledcWrite(valveSwitch, 4096);
 }
 
-// turns pump on, pins must be different
+/***********************************************************************************************************
+    Function: pumpOn()
+    Description: Turns the pump on
+    Preconditions: None
+    Postconditions: Pump is turned on
+************************************************************************************************************/
 void pumpOn()
 {
   digitalWrite(motor_B1, HIGH);
   digitalWrite(motor_A1, LOW);
 }
 
-// turns pump off, both pins low
+/***********************************************************************************************************
+    Function: pumpOff()
+    Description: Turns the pump off
+    Preconditions: None
+    Postconditions: Pump is turned off
+************************************************************************************************************/
 void pumpOff()
 {
   digitalWrite(motor_A1, LOW);

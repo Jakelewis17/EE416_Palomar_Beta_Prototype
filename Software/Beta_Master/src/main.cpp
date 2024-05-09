@@ -1,17 +1,17 @@
 /*******************************************************************************
  * Programmers: Jake Lewis, Zachary Harrington, Nicholas Gerth, Matthew Stavig *                                                      
- * Class: EE415 - Product Design Management                                    *
+ * Class: EE416 - Electrical Engineering Design                                *
  * Sponsoring Company: Philips                                                 *
  * Industry Mentor: Scott Schweizer                                            *
- * Faculty Mentor: Mohammad Torabi Konjin                                      *
+ * Faculty Mentor: Mohammad Torabi                                             *
  *                                                                             *
  *                          Patient Monitor Project                            *
  *                                                                             *
- * Date: 11/23/2023                                                            *
+ * Date: 5/8/2024                                                              *
  * File: main.cpp                                                              *
  *                                                                             *
- * Description: A patient monitor measuring the three most important           *
- *              physilogical parameters: blood oxygen, ECG, and blood pressure *   
+ * Description: Where the program idles when nothing is happening. Branches    *
+ *              to seperate measurement functions based on user input on app   *                                                  
  *                                                                             *
  *                                                                             *
  ******************************************************************************/
@@ -24,25 +24,11 @@ int what_param = -1;
 int ecg_control_value = -1;
 int spo2_control_value = -1;
 int bp_control_value = -1;
+uint32_t tsLastReport = 0;
+char CurrentUser[] = " ";
 
 patientdata Patientdata;
 
-MAX30105 particleSensor;
-
-
-/*  Main Variable Definitions */
-int PreviousCLK;
-int PreviousDATA;
-int LEDBrightness = 0;
-int count = 0;
-int displayState = 0;
-int ecg_position = 0;
-int title_bg_color = 0;
-int bg_color = 0;
-int spo2_title_bg_color = 0;
-uint32_t tsLastReport = 0;
-char CurrentUser[] = " ";
-//char* CurrentUser;
 
 /* Blynk Definitions */
 static WiFiClient _blynkWifiClient;
@@ -85,11 +71,10 @@ BLYNK_WRITE(V62) //User Enter
 {   
   int pinValue = param.asInt(); // assigning incoming value from pin V62 to a variable
   
-  if (pinValue == 1){
+  if (pinValue == 1) //debounces button
+  {
      sendData();
-  } else if (pinValue == 0) {
-   // do something when button is released;
-  }
+  } 
 }
 
 
@@ -105,10 +90,6 @@ void setup() {
 
   //Connect to Blynk app
   Blynk.begin(BLYNK_AUTH_TOKEN, ssid, pass);
-
-  //get initial states of variables
-  PreviousCLK = digitalRead(PinCLK);
-  PreviousDATA = digitalRead(PinDT);
 
   //setup pins 
   pinMode(PinSW, INPUT_PULLUP);
@@ -133,7 +114,6 @@ void loop() {
 
   Blynk.run();
 
-  
   //app control
   if(what_param == 1)
   {
@@ -159,6 +139,12 @@ void loop() {
   
 }
 
+/***********************************************************************************************************
+    Function: sendData()
+    Description: Sends the data over I2C to the slave ESP32. Resets Patientdata struct after sending
+    Preconditions: There must be data to send
+    Postconditions: Data in struct is reset 
+************************************************************************************************************/
 void sendData()
 {
   //connect to slave ESP
@@ -169,7 +155,7 @@ void sendData()
   struct tm tm = *localtime(&t);
   sprintf(Patientdata.date, "%d-%02d", tm.tm_year + 1954, tm.tm_mon + 4);
 
-  //fake data
+  //fake data for testing
   Patientdata.Spo2 = 98;
   Patientdata.SpO2_invalid = 0;
   strcpy(Patientdata.BP, "128/90\0");
@@ -192,26 +178,15 @@ void sendData()
   Serial.println(Patientdata.date);
   Serial.print("ECG: ");
 
-  
-
 
   Wire.beginTransmission(127);
   Wire.write(0); // 0 indicates patient data is incoming
   Wire.write(Patientdata.Spo2);
   Wire.write(Patientdata.SpO2_invalid);
-  //for(int i = 0; i++; i < 10)
-  //{
-    //Wire.write(Patientdata.BP[i]);
-  //}
   Wire.write(Patientdata.BP);
   Wire.write(Patientdata.BP_invalid);
   Wire.write(Patientdata.Heartrate);
-  //for (int i = 0; i < 50; i++)
-  //{
-   // Wire.write(Patientdata.date[i]);
-  //}
   Wire.write(Patientdata.date);
-
   int check = Wire.endTransmission(); //endTransmission sends the queued data
   Serial.print("End Transmission Code: ");
   Serial.println(check);
@@ -225,6 +200,7 @@ void sendData()
   strcpy(Patientdata.BP, " ");
   strcpy(Patientdata.date, " ");
 
+  //reset ECG data back to 0
   for(int i = 0; i < 1000; i++)
   {
     Serial.print(Patientdata.ECG[i]);

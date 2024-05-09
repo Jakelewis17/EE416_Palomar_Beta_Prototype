@@ -31,12 +31,13 @@ String spO2 = "";
 // Flag to indicate if ESP32 has sent data
 bool dataReceived = false;
 
+//global variables
 int i = 0;
 int temp_flag = 0;
 int request_array_index = 0;
 int_arr int_u;
 volatile int master_selection;
-patientdata Patientdata; // Global variable to store received data
+patientdata Patientdata; 
 
 // Replace with your network credentials
 const char* ssid = "LAPTOP-OSBR9R3C 2190";
@@ -76,8 +77,11 @@ spi_device_handle_t spi;
 void setup() {
   Serial.println("In setup");
   Wire.begin(SLAVE_ADDRESS);
+
+  //initialize handlers
   Wire.onReceive(receiveEvent);
   Wire.onRequest(requestEvent);
+
   Serial.begin(115200);
 
   // Connect to Wi-Fi network with SSID and password
@@ -102,12 +106,19 @@ void setup() {
 }
 
 void loop() {
-  // Slave does nothing in loop
+  // Slave does nothing in loop except connect to web server
    
   // connect to web server
   connectserver();
 }
 
+/***********************************************************************************************************
+    Function: receiveEvent()
+    Description: Handler when slave ESP receives data from master ESP. Checks the first byte for a 0 or 1
+    Parameters: How many bytes are being received from master
+    Preconditions: None
+    Postconditions: None
+************************************************************************************************************/
 void receiveEvent(int howMany)
 {
   Serial.println("In receive event");
@@ -125,13 +136,17 @@ void receiveEvent(int howMany)
   
 }
 
+/***********************************************************************************************************
+    Function: connectserver()
+    Description: Connects ESP32 to web server via WiFi
+    Preconditions: None
+    Postconditions: Server is connected
+************************************************************************************************************/
 void connectserver(){
   WiFiClient client = server.available();   // Listen for incoming clients
 
-  if (client) {                             // If a new client connects,
+  if (client) {  // If a new client connects,
     
-    //Serial.println("New Client.");          // print a message out in the serial port
-    //String currentLine = "";                
     // read first line of HTTP request header
     String HTTP_request = "";
     
@@ -160,6 +175,7 @@ void connectserver(){
 
     int page_id = 0;
 
+    //select web server page
     if (HTTP_request.indexOf("GET") == 0) {
       if (HTTP_request.indexOf("GET / ") > -1 || HTTP_request.indexOf("GET /index ") > -1 || HTTP_request.indexOf("GET /index.html ") > -1){
         Serial.println("Home Page!");
@@ -235,26 +251,34 @@ void connectserver(){
   }
 }
 
+/***********************************************************************************************************
+    Function: send_to_webserver()
+    Description: Reads data via I2C from master and sends to web server over WiFi
+    Preconditions: ECG leads must be plugged in to get accurate data
+    Postconditions: Data viewable on Blynk app, Patientdata struct updated with correct data
+************************************************************************************************************/
 void send_to_webserver()
 {
   
   int SpO2 = Wire.read();    // receive byte as an integer
   Patientdata.Spo2 = SpO2;   //populate Patientdata data structure
 
-  int SpO2_valid = Wire.read();
+  int SpO2_valid = Wire.read(); //read spo2 valud flag
   Patientdata.SpO2_invalid = SpO2_valid;
 
+  //read bloop pressure string
   for(int i = 0; i < 6; i++)
   {
     Patientdata.BP[i] = Wire.read();
   }
   Patientdata.BP[7] = '\0';
-  int BP_valid = Wire.read();
+  int BP_valid = Wire.read(); //read blood pressure valid flag
   Patientdata.BP_invalid = BP_valid;
 
-  byte heartrate = Wire.read();
+  byte heartrate = Wire.read(); //read heartrate
   Patientdata.Heartrate = (int)heartrate;
 
+  //read current date
   for(int i = 0; i < 7; i++)
   {
     Patientdata.date[i] = Wire.read();
@@ -291,6 +315,7 @@ bloodPressure = Patientdata.BP;
 heartRate = Patientdata.Heartrate;
 spO2 = Patientdata.Spo2;
 
+  //test ECG Data
   for(int i = 0; i < 1000; i++)
   {
     Patientdata.ECG[i] = i;
@@ -306,6 +331,12 @@ spO2 = Patientdata.Spo2;
 
 }
 
+/***********************************************************************************************************
+    Function: handleVariables()
+    Description: Updates web server with new data received from master
+    Preconditions: Data request from master must be initialized first
+    Postconditions: Web server is updated
+************************************************************************************************************/
 void handleVariables() {
   // Receive variables from ESP32
   if (dataReceived) {
@@ -328,6 +359,12 @@ void handleVariables() {
   }
 }
 
+/***********************************************************************************************************
+    Function: generate_id_number()
+    Description: Generates random ID number between 0 - 9999 to simulate real life 
+    Preconditions: None
+    Postconditions: None
+************************************************************************************************************/
 void generate_id_number(){
   int random_id = random(10000); // Generate a random number between 0 and 9999
 
@@ -344,6 +381,12 @@ void generate_id_number(){
   }
 }
 
+/***********************************************************************************************************
+    Function: init_ECG()
+    Description: Initializes SPI bus and adds SPI device
+    Preconditions: None
+    Postconditions: ECG system is initialized
+************************************************************************************************************/
 void init_ECG()
 {
   esp_err_t ret;
@@ -353,11 +396,16 @@ void init_ECG()
   assert(ret == ESP_OK);
 
   // Add the SPI device
-  
   ret = spi_bus_add_device(VSPI_HOST, &dev_config, &spi);
   assert(ret == ESP_OK);
 }
 
+/***********************************************************************************************************
+    Function: ECG_Measurement()
+    Description: Reads ECG data via Slave's ADC and performs cross-correlation algorithm
+    Preconditions: SPI bus must be initialized and SPI device must be added
+    Postconditions: ECG data stored in Patientdata struct
+************************************************************************************************************/
 void ECG_Measurement()
 {
   Serial.println("In ECG Measurement");
@@ -384,9 +432,6 @@ void ECG_Measurement()
     }
     ECG_correlation_data[ECG_CORRELATION_LENGTH-1] = raw_value;
     
-    // *** Add code to update webserver/app ***
-    //Serial.println(raw_value);
-
     // Cross Correlation
     double sum = 0;
     for (int i = 0; i < ECG_CORRELATION_LENGTH; i++) {
@@ -412,27 +457,15 @@ void ECG_Measurement()
     delay(10);
   }
 
-  // byte TxByte = 0;
-
-  // if(temp_flag == 0)
-  // {
-  // //temp for testing
-  //  for(int i = 0; i < 255; i++)
-  //  {
-  //   //Wire.beginTransmission(SLAVE_ADDRESS); // transmit to device 127
-  //   Patientdata.ECG[i] = i;
-  //   //Wire.write((byte)Patientdata.ECG[i]);
-  //   Wire.write("a");
-  //   Serial.print("Data: ");
-  //   Serial.println(Patientdata.ECG[i]);
-  //   //Wire.endTransmission();    // stop transmitting
-  //  }  
-
-  //  temp_flag = 1;
-  // }
    
 }
 
+/***********************************************************************************************************
+    Function: requestEvent()
+    Description: Handler when master ESP requests data from slave. Sends the ECG data to the master
+    Preconditions: None
+    Postconditions: None
+************************************************************************************************************/
 void requestEvent() {
 
   //when master requests data

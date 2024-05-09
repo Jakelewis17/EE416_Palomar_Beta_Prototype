@@ -1,17 +1,16 @@
 /*******************************************************************************
  * Programmers: Jake Lewis, Zachary Harrington, Nicholas Gerth, Matthew Stavig *                                                      
- * Class: EE415 - Product Design Management                                    *
+ * Class: EE416 - Electrical Engineering Design                                *
  * Sponsoring Company: Philips                                                 *
  * Industry Mentor: Scott Schweizer                                            *
- * Faculty Mentor: Mohammad Torabi Konjin                                      *
+ * Faculty Mentor: Mohammad Torabi                                             *
  *                                                                             *
  *                          Patient Monitor Project                            *
  *                                                                             *
- * Date: 4/15/2024                                                             *
+ * Date: 5/8/2024                                                              *
  * File: index.h                                                               *
  *                                                                             *
- * Description: A patient monitor measuring the three most important           *
- *              physilogical parameters: blood oxygen, ECG, and blood pressure *   
+ * Description: HTML for index.h                                               *
  *                                                                             *
  *                                                                             *
  ******************************************************************************/

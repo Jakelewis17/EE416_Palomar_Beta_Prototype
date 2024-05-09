@@ -1,17 +1,18 @@
 /*******************************************************************************
  * Programmers: Jake Lewis, Zachary Harrington, Nicholas Gerth, Matthew Stavig *                                                      
- * Class: EE415 - Product Design Management                                    *
+ * Class: EE416 - Electrical Engineering Design                                *
  * Sponsoring Company: Philips                                                 *
  * Industry Mentor: Scott Schweizer                                            *
- * Faculty Mentor: Mohammad Torabi Konjin                                      *
+ * Faculty Mentor: Mohammad Torabi                                             *
  *                                                                             *
  *                          Patient Monitor Project                            *
  *                                                                             *
- * Date: 11/23/2023                                                            *
- * File: header.h                                                              *
+ * Date: 5/8/2024                                                              *
+ * File: Patient_monitor.h                                                     *
  *                                                                             *
- * Description: A patient monitor measuring the three most important           *
- *              physilogical parameters: blood oxygen, ECG, and blood pressure *   
+ * Description: The master header file which includes all necessary libraries, *
+ *              Blynk credential information, data stuctures, and function     *
+ *              definitions                                                    *
  *                                                                             *
  *                                                                             *
  ******************************************************************************/
@@ -37,19 +38,17 @@
 #include <BlynkSimpleEsp32.h>
 #include <SparkFun_Bio_Sensor_Hub_Library.h>
 
-#define REPORTING_PERIOD_MS     1000
-#define MAX_BRIGHTNESS 255
-
+/* Blynk Definitions */
 #define BLYNK_FIRMWARE_VERSION   "1.3.2"
 #define BLYNK_PRINT Serial
 #define APP_DEBUG
 #define USE_ESP32_DEV_MODULE
-
 #define TIMER0_INTERVAL_MS        1000
 #define TIMER0_DURATION_MS        5000
 
 #define ECG_SAMPLES 1000
 
+/* User defined type to store patient data */
 struct patientdata{
     int Spo2;
     char BP[7];
@@ -61,17 +60,15 @@ struct patientdata{
     int ECG_invalid;
     char name[15];
 };
-
 extern struct patientdata Patientdata;
 
+/* Union for easiesr I2C communication between master and slave */
 union int_arr
 {
    byte    intbytes[sizeof(int)];
    int     intvalue;   
 };
 
-
-//extern BlynkWifi Blynk;
 
 /* Define IO Pins */
 const int PinCLK = 27;
@@ -90,29 +87,10 @@ const int pVIn = 2;
 const int resPin = 4;
 const int mfioPin = 5;
 
-/* Function definitions */
-void read_ecg();
-void read_spo2();
-void read_bp();
-void ecg_measurement();
-void spo2_measurment();
-void bp_measurement();
-void display_spo2(int finger_detect);
-void drawLine(int xPos, int analogVal);
-void calculateBPM(); 
-void calculateSpO2(int index);
-void calculateHR(int index);
-
-//Blood Pressure Functions
-void openValve();
-void closeValve();
-void cycleBPSystem();
-void runPump30s();
-void pumpOn();
-void stopPump();
-void displayBP(float pressure);
-
-void sendData();
+/***************************************** Function definitions ********************************************/
 
 
-#endif
+/***********************************************************************************************************
+    Function: read_ecg()
+    Description: Tells slave to start ECG measurement, requests ECG data from slave, sends data to Blynk app
+    Preconditions: ECG leads 
